@@ -75,11 +75,15 @@ data class GameState(
     }
 
     // Apply all the powerups to the base parameters
-    private fun get_parameters(): GameParameters =
-        this.powerups
+    private fun get_parameters(): GameParameters {
+        if (this.powerups.isEmpty())
+            return this.baseParameters
+
+        return this.powerups
             .sortedBy { it.type.order }
             .reduce { acc, powerup ->  acc + powerup }
             .apply(this.baseParameters)
+    }
 
     // Try to adquire a new scorer and return how the new scorers list
     // would look like
