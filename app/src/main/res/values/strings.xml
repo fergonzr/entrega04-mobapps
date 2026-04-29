@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">AngelOrphanage</string>
+    <string name="food_label">Comida</string>
+    <string name="water_label">Agua</string>
+    <string name="dog_label">Perro</string>
+    <string name="cat_label">Gato</string>
+</resources>
