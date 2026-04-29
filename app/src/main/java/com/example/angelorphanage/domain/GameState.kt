@@ -29,32 +29,42 @@ data class GameState(
         if (allocation.size > this.scorers.size)
             throw IllegalArgumentException("Can't allocate to more than ${this.scorers.size} scorers")
 
-        // Allocate resources
-        for ((index, scorerAllocation) in allocation.withIndex()){
-            // Do nothing if the scorer has been given away
-            if (this.scorers[index].givenAway)
-                continue
-
-            if (scorerAllocation.isNotEmpty())
-                this.scorers[index].allocate(scorerAllocation)
-            else
-                this.scorers[index].tickdown(this.get_parameters())
+        // Process each scorer to create new instances with updated state
+        val newScorers = this.scorers.mapIndexed { index, scorer ->
+            if (scorer.givenAway) {
+                // Keep given away scorers as-is
+                scorer
+            } else if (allocation.getOrNull(index).isNullOrEmpty()) {
+                // Apply tickdown if no allocation
+                scorer.tickdown(this.get_parameters())
+            } else {
+                // Apply allocation
+                scorer.allocate(allocation[index])
+            }
         }
 
-        // Make our scorers score
-        var newScore = this.score + this.scorers
-            .filter { !it.givenAway }
-            .sumOf { it.score(this.get_parameters()) }
+        // Calculate scores and handle giveaways
+        var newScore = this.score
+        val finalScorers = newScorers.map { scorer ->
+            if (scorer.givenAway) {
+                scorer
+            } else {
+                // Calculate score
+                val (scorerWithScore, score) = scorer.score(this.get_parameters())
+                newScore += score
 
-        // Try to give away our scorers
-        newScore += this.scorers
-            .sumOf { it.try_giveaway(this.get_parameters()) }
+                // Try to give away
+                val (scorerAfterGiveaway, giveawayScore) = scorerWithScore.try_giveaway(this.get_parameters())
+                newScore += giveawayScore
 
+                scorerAfterGiveaway
+            }
+        }
 
         return this.copy(
             score = newScore,
             elapsedTurns = this.elapsedTurns + 1,
-            scorers = this.try_adquire_new(),
+            scorers = finalScorers.try_adquire_new(this.get_parameters()),
             currentResources = this.currentResources
                 .map { it.key to (it.value + it.key.generate(this.get_parameters())) }
                 .associate { it }
@@ -85,13 +95,12 @@ data class GameState(
             .apply(this.baseParameters)
     }
 
-    // Try to adquire a new scorer and return how the new scorers list
-    // would look like
-    private fun try_adquire_new(): List<ScorerInstance> {
-        val newScorer = try_adquire(this.get_parameters())
+    // Try to adquire a new scorer and return the new scorers list
+    private fun List<ScorerInstance>.try_adquire_new(parameters: GameParameters): List<ScorerInstance> {
+        val newScorer = try_adquire(parameters)
 
         if (newScorer != null)
-            return this.scorers + newScorer
-        return this.scorers
+            return this + newScorer
+        return this
     }
 }
