@@ -4,4 +4,8 @@
     <string name="water_label">Agua</string>
     <string name="dog_label">Perro</string>
     <string name="cat_label">Gato</string>
+    <string name="decoration_label">Decoración</string>
+    <string name="decoration_desc">Tus mascotas se sienten más a gusto en tu orfanato cuando se ve bonito.</string>
+    <string name="visibility_label">Visibilidad</string>
+    <string name="visibility_desc">Haz tu orfanato más visible para los animales perdidos.</string>
 </resources>

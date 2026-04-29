@@ -5,15 +5,16 @@ import com.example.angelorphanage.R
 
 enum class ResourceType(
     @StringRes name: Int,
+    val initialValue: Int
 ) : Resource {
-    FOOD(R.string.food_label) {
+    FOOD(R.string.food_label, 2) {
         override fun generate(parameters: GameParameters): Int {
-            TODO("Not yet implemented")
+            return parameters.getFoodMultiplier()
         }
     },
-    WATER(R.string.water_label) {
+    WATER(R.string.water_label, 3) {
         override fun generate(parameters: GameParameters): Int {
-            TODO("Not yet implemented")
+            return parameters.getWaterMultiplier()
         }
     }
 }
