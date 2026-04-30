@@ -41,6 +41,13 @@ fun GameScreen() {
     var gameState by remember { mutableStateOf(GameState()) }
     var allocationMap by remember { mutableStateOf<List<Map<ResourceType, Int>>>(List(gameState.scorers.size) { emptyMap() }) }
 
+    // Calculate total allocated resources
+    val totalAllocated = remember(allocationMap) {
+        allocationMap.fold(emptyMap<ResourceType, Int>()) { acc, map ->
+            acc + map.mapValues { (key, value) -> (acc[key] ?: 0) + value }
+        }
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -63,11 +70,15 @@ fun GameScreen() {
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
-            ResourceDisplay(currentResources = gameState.currentResources)
+            ResourceDisplay(
+                currentResources = gameState.currentResources,
+                totalAllocated = totalAllocated
+            )
             Spacer(modifier = Modifier.height(16.dp))
             ScorerList(
                 scorers = gameState.scorers,
                 currentResources = gameState.currentResources,
+                totalAllocated = totalAllocated,
                 allocationMap = allocationMap,
                 onUpdateAllocation = { index, newAllocation ->
                     // Update the allocation for specific scorer
@@ -119,11 +130,10 @@ fun GameBottomBar(onRunTurn: () -> Unit) {
 }
 
 @Composable
-fun ResourceDisplay(currentResources: Map<ResourceType, Int>) {
+fun ResourceDisplay(currentResources: Map<ResourceType, Int>, totalAllocated: Map<ResourceType, Int>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFE0E0E0))
             .padding(8.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
@@ -131,6 +141,11 @@ fun ResourceDisplay(currentResources: Map<ResourceType, Int>) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(resourceType.name.replace("_", " "), fontWeight = FontWeight.Bold)
                 Text(text = currentResources[resourceType].toString())
+                Text(
+                    text = "Allocated: ${totalAllocated[resourceType] ?: 0}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary
+                )
             }
         }
     }
@@ -140,6 +155,7 @@ fun ResourceDisplay(currentResources: Map<ResourceType, Int>) {
 fun ScorerList(
     scorers: List<ScorerInstance>,
     currentResources: Map<ResourceType, Int>,
+    totalAllocated: Map<ResourceType, Int>,
     allocationMap: List<Map<ResourceType, Int>>,
     onUpdateAllocation: (Int, Map<ResourceType, Int>) -> Unit
 ) {
@@ -152,6 +168,7 @@ fun ScorerList(
                 index = index,
                 scorer = scorer,
                 currentResources = currentResources,
+                totalAllocated = totalAllocated,
                 currentAllocation = allocationMap.getOrElse(index) { emptyMap() },
                 onUpdateAllocation = { newAllocation ->
                     onUpdateAllocation(index, newAllocation)
@@ -166,12 +183,22 @@ fun ScorerCard(
     index: Int,
     scorer: ScorerInstance,
     currentResources: Map<ResourceType, Int>,
+    totalAllocated: Map<ResourceType, Int>,
     currentAllocation: Map<ResourceType, Int>,
     onUpdateAllocation: (Map<ResourceType, Int>) -> Unit
 ) {
     // Get current allocation values
     val currentFood = currentAllocation[ResourceType.FOOD] ?: 0
     val currentWater = currentAllocation[ResourceType.WATER] ?: 0
+
+    // Calculate if we can allocate more of each resource
+    val availableFood = currentResources[ResourceType.FOOD] ?: 0
+    val availableWater = currentResources[ResourceType.WATER] ?: 0
+    val allocatedFood = totalAllocated[ResourceType.FOOD] ?: 0
+    val allocatedWater = totalAllocated[ResourceType.WATER] ?: 0
+
+    val canAllocateMoreFood = allocatedFood < availableFood
+    val canAllocateMoreWater = allocatedWater < availableWater
 
     Column(
         modifier = Modifier
@@ -278,7 +305,8 @@ fun ScorerCard(
                                     ResourceType.WATER to currentWater
                                 ))
                             },
-                            modifier = Modifier.width(32.dp)
+                            modifier = Modifier.width(32.dp),
+                            enabled = canAllocateMoreFood
                         ) {
                             Text("+")
                         }
@@ -309,7 +337,8 @@ fun ScorerCard(
                                     ResourceType.WATER to currentWater + 1
                                 ))
                             },
-                            modifier = Modifier.width(32.dp)
+                            modifier = Modifier.width(32.dp),
+                            enabled = canAllocateMoreWater
                         ) {
                             Text("+")
                         }

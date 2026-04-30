@@ -29,6 +29,14 @@ data class GameState(
         if (allocation.size > this.scorers.size)
             throw IllegalArgumentException("Can't allocate to more than ${this.scorers.size} scorers")
 
+        // Calculate how many resources we are left with
+        val newResources = this.currentResources - allocation
+            .reduce { acc, it -> acc + it }
+
+        // Verify we don't go into the negatives in any of them
+        if (newResources.any { it.value < 0 })
+            throw IllegalArgumentException("Can't allocate more resources than there are on stock.")
+
         // Process each scorer to create new instances with updated state
         val newScorers = this.scorers.mapIndexed { index, scorer ->
             if (scorer.givenAway) {
@@ -65,7 +73,7 @@ data class GameState(
             score = newScore,
             elapsedTurns = this.elapsedTurns + 1,
             scorers = finalScorers.try_adquire_new(this.get_parameters()),
-            currentResources = this.currentResources
+            currentResources = newResources
                 .map { it.key to (it.value + it.key.generate(this.get_parameters())) }
                 .associate { it }
         )
@@ -103,4 +111,14 @@ data class GameState(
             return this + newScorer
         return this
     }
+
+    private operator fun Map<ResourceType, Int>.plus(other: Map<ResourceType, Int>): Map<ResourceType, Int> =
+        this.keys
+            .map { Pair(it, this[it]!! + other.getOrDefault(it, 0)) }
+            .associate { it }
+
+    private operator fun Map<ResourceType, Int>.minus(other: Map<ResourceType, Int>): Map<ResourceType, Int> =
+        this.keys
+            .map { Pair(it, this[it]!! - other.getOrDefault(it, 0)) }
+            .associate { it }
 }

@@ -28,7 +28,7 @@ data class ScorerInstance(
     fun tickdown(parameters: GameParameters): ScorerInstance {
         val newMeters = this.type
             .tickdown_meters(parameters, this.meters)
-            .map { it.key to min(
+            .map { it.key to max(
                     (this.meters.getOrDefault(it.key, 0) - it.value),
                     this.type.meterLimits[it.key]!!.first
                 )
@@ -65,7 +65,7 @@ data class ScorerInstance(
     fun allocate(resources: Map<ResourceType, Int>): ScorerInstance {
         val newMeters = ResourceType.entries.associateWith { resType ->
             // The amount of resources to be allocated is hard-capped by the type's upper meter limit
-            max(
+            min(
                 this.meters[resType]!! + resources.getOrDefault(resType, 0),
                 this.type.meterLimits[resType]!!.second
             )
