@@ -160,7 +160,7 @@ fun ScorerList(
     onUpdateAllocation: (Int, Map<ResourceType, Int>) -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxHeight(0.6f),
+        modifier = Modifier.fillMaxHeight(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(scorers.filter { !it.givenAway }.withIndex().toList() ) { (index, scorer) ->
@@ -197,14 +197,25 @@ fun ScorerCard(
     val allocatedFood = totalAllocated[ResourceType.FOOD] ?: 0
     val allocatedWater = totalAllocated[ResourceType.WATER] ?: 0
 
-    val canAllocateMoreFood = allocatedFood < availableFood
-    val canAllocateMoreWater = allocatedWater < availableWater
+    // Check if allocating more would exceed resource availability
+    val canAllocateMoreFoodByAvailability = allocatedFood < availableFood
+    val canAllocateMoreWaterByAvailability = allocatedWater < availableWater
+
+    // Check if allocating more would exceed meter maximum limits
+    val foodMaxLimit = scorer.type.meterLimits[ResourceType.FOOD]?.second ?: Int.MAX_VALUE
+    val waterMaxLimit = scorer.type.meterLimits[ResourceType.WATER]?.second ?: Int.MAX_VALUE
+    val canAllocateMoreFoodByMeter = ((scorer.meters[ResourceType.FOOD] ?: 0) + currentFood) < foodMaxLimit
+    val canAllocateMoreWaterByMeter = ((scorer.meters[ResourceType.WATER] ?: 0) + currentWater) < waterMaxLimit
+
+    // Combine both conditions: can allocate more only if both resource and meter limits allow it
+    val canAllocateMoreFood = canAllocateMoreFoodByAvailability && canAllocateMoreFoodByMeter
+    val canAllocateMoreWater = canAllocateMoreWaterByAvailability && canAllocateMoreWaterByMeter
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.onPrimaryContainer)
             .padding(16.dp)
             .clickable { /* Optional expand/collapse behavior */ },
         verticalArrangement = Arrangement.spacedBy(8.dp)

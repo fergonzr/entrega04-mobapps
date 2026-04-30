@@ -15,7 +15,7 @@ data class GameState(
     constructor(): this(
         score = 0,
         elapsedTurns = 0,
-        scorers = (0..3).map { adquire() }.toList(),
+        scorers = (0..2).map { adquire() }.toList(),
         currentResources = ResourceType.entries.associateWith { it.initialValue },
         powerups = setOf()
     )
