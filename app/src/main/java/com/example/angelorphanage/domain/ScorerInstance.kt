@@ -62,13 +62,21 @@ data class ScorerInstance(
     /**
      * Create a new ScorerInstance with resources allocated
      */
-    fun allocate(resources: Map<ResourceType, Int>): ScorerInstance {
+    fun allocate_or_tick(parameters: GameParameters, resources: Map<ResourceType, Int>): ScorerInstance {
         val newMeters = ResourceType.entries.associateWith { resType ->
-            // The amount of resources to be allocated is hard-capped by the type's upper meter limit
-            min(
-                this.meters[resType]!! + resources.getOrDefault(resType, 0),
-                this.type.meterLimits[resType]!!.second
+            if (resources.getOrDefault(resType, 0) != 0)
+                // The amount of resources to be allocated is hard-capped
+                // by the type's upper meter limit
+                min(
+                    this.meters[resType]!! + resources.getOrDefault(resType, 0),
+                    this.type.meterLimits[resType]!!.second
+                )
+            else
+            max(
+                (this.meters.getOrDefault(resType, 0) - this.type.tickdown_meters(parameters, this.meters)[resType]!!),
+                this.type.meterLimits[resType]!!.first
             )
+
         }
         return this.copy(meters = newMeters)
     }

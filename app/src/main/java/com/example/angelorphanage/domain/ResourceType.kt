@@ -4,7 +4,7 @@ import androidx.annotation.StringRes
 import com.example.angelorphanage.R
 
 enum class ResourceType(
-    @StringRes name: Int,
+    @param:StringRes val nameRes: Int,
     val initialValue: Int
 ) : Resource {
     FOOD(R.string.food_label, 2) {

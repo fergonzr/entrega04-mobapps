@@ -37,23 +37,9 @@ data class GameState(
         if (newResources.any { it.value < 0 })
             throw IllegalArgumentException("Can't allocate more resources than there are on stock.")
 
-        // Process each scorer to create new instances with updated state
-        val newScorers = this.scorers.mapIndexed { index, scorer ->
-            if (scorer.givenAway) {
-                // Keep given away scorers as-is
-                scorer
-            } else if (allocation.getOrNull(index).isNullOrEmpty()) {
-                // Apply tickdown if no allocation
-                scorer.tickdown(this.get_parameters())
-            } else {
-                // Apply allocation
-                scorer.allocate(allocation[index])
-            }
-        }
-
         // Calculate scores and handle giveaways
         var newScore = this.score
-        val finalScorers = newScorers.map { scorer ->
+        val newScorers = this.scorers.map { scorer ->
             if (scorer.givenAway) {
                 scorer
             } else {
@@ -66,6 +52,17 @@ data class GameState(
                 newScore += giveawayScore
 
                 scorerAfterGiveaway
+            }
+        }
+
+        // Process each scorer to create new instances with updated state
+        val finalScorers = newScorers.mapIndexed { index, scorer ->
+            if (scorer.givenAway) {
+                // Keep given away scorers as-is
+                scorer
+            } else {
+                // Apply allocation or ticking based on the resource
+                scorer.allocate_or_tick(this.get_parameters(), allocation[index])
             }
         }
 

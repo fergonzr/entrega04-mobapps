@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.angelorphanage.domain.GameState
@@ -163,7 +164,7 @@ fun ScorerList(
         modifier = Modifier.fillMaxHeight(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(scorers.filter { !it.givenAway }.withIndex().toList() ) { (index, scorer) ->
+        items(scorers.withIndex().filter { !it.value.givenAway }.toList() ) { (index, scorer) ->
             ScorerCard(
                 index = index,
                 scorer = scorer,
@@ -259,28 +260,32 @@ fun ScorerCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("${resourceType.name.replace("_", " ")}:")
+                Text(stringResource(resourceType.nameRes))
                 Text(
                     text = "$meterValue / $maxLimit",
                     fontWeight = FontWeight.Bold
                 )
             }
             Spacer(modifier = Modifier.height(4.dp))
-            Box(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)
                     .clip(RoundedCornerShape(4.dp))
-                    .background(
-                        if (meterValue >= maxLimit) Color(0xFF4CAF50) else Color(0xFFE0E0E0)
-                    )
+                    .background( MaterialTheme.colorScheme.surface ),
+                horizontalArrangement = Arrangement.SpaceAround
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth((meterValue.toFloat() / maxLimit.coerceAtLeast(1)).coerceIn(0.0f, 1.0f))
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Color(0xFF2196F3))
-                )
+                ((minLimit + 1)..maxLimit).map {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .padding(2.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(Color(if (it <= meterValue) 0xFF2196F3 else 0xFFE0E0E0))
+                    )
+                }
             }
         }
 
