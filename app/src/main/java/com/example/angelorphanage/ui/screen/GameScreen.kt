@@ -2,10 +2,13 @@ package com.example.angelorphanage.ui.screen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -70,6 +73,11 @@ private val PET_POSITIONS = listOf(
  * The main game screen. Displays the salon room with pets, resource indicators,
  * a powerups button, game stats, and a turn-advancement button.
  * Forces landscape orientation (set in AndroidManifest).
+ *
+ * Allocation mechanism:
+ * 1. User taps a resource indicator in the HUD to select it.
+ * 2. User taps a pet to allocate +1 of the selected resource to it.
+ * 3. Each pet has a reset button to clear its allocation.
  */
 @Composable
 fun GameScreen(onGameFinished: (GameState) -> Unit) {
@@ -79,6 +87,7 @@ fun GameScreen(onGameFinished: (GameState) -> Unit) {
             List(gameState.scorers.size) { emptyMap() }
         )
     }
+    var selectedResource by remember { mutableStateOf<ResourceType?>(null) }
 
     // Ensure allocation map grows when new pets arrive
     if (allocationMap.size < gameState.scorers.size) {
@@ -104,6 +113,7 @@ fun GameScreen(onGameFinished: (GameState) -> Unit) {
         gameState = gameState,
         allocationMap = allocationMap,
         totalAllocated = totalAllocated,
+        selectedResource = selectedResource,
         onAllocate = { index, newAllocation ->
             val newAllocationMap = allocationMap.toMutableList()
             if (index < newAllocationMap.size) {
@@ -118,6 +128,9 @@ fun GameScreen(onGameFinished: (GameState) -> Unit) {
                     ) { emptyMap<ResourceType, Int>() }
             gameState = gameState.run(paddedAllocation)
             allocationMap = List(gameState.scorers.size) { emptyMap() }
+        },
+        onSelectResource = { resourceType ->
+            selectedResource = if (selectedResource == resourceType) null else resourceType
         }
     )
 }
@@ -131,8 +144,10 @@ fun GameScreenContent(
     gameState: GameState,
     allocationMap: List<Map<ResourceType, Int>>,
     totalAllocated: Map<ResourceType, Int>,
+    selectedResource: ResourceType?,
     onAllocate: (Int, Map<ResourceType, Int>) -> Unit,
-    onRunTurn: () -> Unit
+    onRunTurn: () -> Unit,
+    onSelectResource: (ResourceType) -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         // Background — the salon room image
@@ -151,6 +166,8 @@ fun GameScreenContent(
             elapsedTurns = gameState.elapsedTurns,
             score = gameState.score,
             powerUpsUnlocked = gameState.powerUpsUnlocked,
+            selectedResource = selectedResource,
+            onSelectResource = onSelectResource,
             modifier = Modifier.align(Alignment.TopStart)
         )
 
@@ -168,29 +185,22 @@ fun GameScreenContent(
                     val (xFraction, yFraction) = PET_POSITIONS[index]
 
                     val currentAllocation = allocationMap.getOrElse(index) { emptyMap() }
-                    val currentFood = currentAllocation[ResourceType.FOOD] ?: 0
-                    val currentWater = currentAllocation[ResourceType.WATER] ?: 0
 
-                    // Allocation availability checks
-                    val availableFood = gameState.currentResources[ResourceType.FOOD] ?: 0
-                    val availableWater = gameState.currentResources[ResourceType.WATER] ?: 0
-                    val allocatedFood = totalAllocated[ResourceType.FOOD] ?: 0
-                    val allocatedWater = totalAllocated[ResourceType.WATER] ?: 0
-                    val canAllocateMoreFood =
-                        allocatedFood < availableFood &&
-                        ((scorer.meters[ResourceType.FOOD] ?: 0) + currentFood) <
-                            (scorer.type.meterLimits[ResourceType.FOOD]?.second ?: Int.MAX_VALUE)
-                    val canAllocateMoreWater =
-                        allocatedWater < availableWater &&
-                        ((scorer.meters[ResourceType.WATER] ?: 0) + currentWater) <
-                            (scorer.type.meterLimits[ResourceType.WATER]?.second ?: Int.MAX_VALUE)
+                    // Compute per-resource allocation availability for this pet
+                    val canAllocateMore = ResourceType.entries.associateWith { resType ->
+                        val available = gameState.currentResources[resType] ?: 0
+                        val totalAlloc = totalAllocated[resType] ?: 0
+                        val currentAlloc = currentAllocation[resType] ?: 0
+                        val meterValue = scorer.meters[resType] ?: 0
+                        val maxLimit = scorer.type.meterLimits[resType]?.second ?: Int.MAX_VALUE
+                        totalAlloc < available && (meterValue + currentAlloc) < maxLimit
+                    }
 
                     PetDisplay(
                         scorer = scorer,
-                        currentFoodAllocation = currentFood,
-                        currentWaterAllocation = currentWater,
-                        canAllocateMoreFood = canAllocateMoreFood,
-                        canAllocateMoreWater = canAllocateMoreWater,
+                        currentAllocation = currentAllocation,
+                        canAllocateMore = canAllocateMore,
+                        selectedResource = selectedResource,
                         onAllocate = { newAllocation ->
                             onAllocate(index, newAllocation)
                         },
@@ -233,29 +243,36 @@ fun TopHudBar(
     elapsedTurns: Int,
     score: Int,
     powerUpsUnlocked: Boolean,
+    selectedResource: ResourceType?,
+    onSelectResource: (ResourceType) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .background(Color.Black.copy(alpha = 0.55f))
             .padding(horizontal = 12.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Left: Resource indicators (food and water)
+        // Left: Resource indicators (tappable for selection)
         Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             ResourceIndicator(
                 type = ResourceType.FOOD,
                 amount = currentResources[ResourceType.FOOD] ?: 0,
-                allocated = totalAllocated[ResourceType.FOOD] ?: 0
+                allocated = totalAllocated[ResourceType.FOOD] ?: 0,
+                isSelected = selectedResource == ResourceType.FOOD,
+                onClick = { onSelectResource(ResourceType.FOOD) }
             )
             ResourceIndicator(
                 type = ResourceType.WATER,
                 amount = currentResources[ResourceType.WATER] ?: 0,
-                allocated = totalAllocated[ResourceType.WATER] ?: 0
+                allocated = totalAllocated[ResourceType.WATER] ?: 0,
+                isSelected = selectedResource == ResourceType.WATER,
+                onClick = { onSelectResource(ResourceType.WATER) }
             )
         }
 
@@ -288,16 +305,38 @@ fun TopHudBar(
 
 /**
  * Shows a resource type with its current stock and allocated amount.
- * Uses bowl/water images from drawable resources.
+ * Tappable: selects this resource as the active allocation target.
+ * When selected, displays a highlighted border.
  */
 @Composable
-fun ResourceIndicator(type: ResourceType, amount: Int, allocated: Int) {
+fun ResourceIndicator(
+    type: ResourceType,
+    amount: Int,
+    allocated: Int,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
     val imageRes = when (type) {
         ResourceType.FOOD -> if (amount > 0) R.drawable.pplatolleno else R.drawable.pplatovacio
         ResourceType.WATER -> if (amount > 0) R.drawable.pconagua else R.drawable.psinagua
     }
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    val highlightModifier = if (isSelected) {
+        Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .border(2.dp, Color(0xFFFFEB3B), RoundedCornerShape(8.dp))
+            .background(Color(0x55FFEB3B))
+    } else {
+        Modifier
+            .clip(RoundedCornerShape(8.dp))
+    }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = highlightModifier
+            .clickable(onClick = onClick)
+            .padding(horizontal = 6.dp, vertical = 4.dp)
+    ) {
         Image(
             painter = painterResource(id = imageRes),
             contentDescription = stringResource(type.nameRes),
@@ -307,7 +346,7 @@ fun ResourceIndicator(type: ResourceType, amount: Int, allocated: Int) {
         Column {
             Text(
                 text = amount.toString(),
-                color = Color.White,
+                color = if (isSelected) Color(0xFFFFEB3B) else Color.White,
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp
             )
@@ -323,18 +362,16 @@ fun ResourceIndicator(type: ResourceType, amount: Int, allocated: Int) {
 }
 
 /**
- * A compact info badge showing an icon, label, and value.
+ * A compact info badge showing an icon and value.
  */
 @Composable
 fun InfoBadge(icon: String, label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
         Text(text = icon, fontSize = 14.sp)
-        Text(
-            text = label,
-            color = Color(0xFFB0BEC5),
-            fontSize = 9.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = value,
             color = Color.White,
@@ -347,17 +384,25 @@ fun InfoBadge(icon: String, label: String, value: String) {
 // ─── Pet Display ──────────────────────────────────────────────────────
 
 /**
- * Displays a single pet with vertical meter bars on the left,
- * the pet image, name, and allocation controls.
- * Positioned at an arbitrary offset via the modifier.
+ * Displays a single pet with horizontal meter bars and a reset button.
+ * Tapping the pet allocates +1 of the currently selected resource.
+ *
+ * Layout:
+ * ```
+ * ┌─────────────────────┐
+ * │     🐶 Firulais      │
+ * │  C ▓▓▓▒░  A ▓▓▒░  │
+ * │        [↺]          │
+ * └─────────────────────┘
+ * ```
+ * Where ▓ = filled, ▒ = allocation preview (light blue), ░ = empty.
  */
 @Composable
 fun PetDisplay(
     scorer: ScorerInstance,
-    currentFoodAllocation: Int,
-    currentWaterAllocation: Int,
-    canAllocateMoreFood: Boolean,
-    canAllocateMoreWater: Boolean,
+    currentAllocation: Map<ResourceType, Int>,
+    canAllocateMore: Map<ResourceType, Boolean>,
+    selectedResource: ResourceType?,
     onAllocate: (Map<ResourceType, Int>) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -370,8 +415,20 @@ fun PetDisplay(
         ScorerType.CAT -> if (isHappy) R.drawable.gatofeliz else R.drawable.gatotriste
     }
 
-    Box(modifier = modifier) {
-        // Semi-transparent background pill behind the pet
+    // Whether tapping this pet would do anything
+    val canAllocate = selectedResource != null && canAllocateMore[selectedResource] == true
+
+    Box(
+        modifier = modifier.clickable(
+            enabled = canAllocate,
+            onClick = {
+                if (selectedResource != null) {
+                    val currentAmount = currentAllocation[selectedResource] ?: 0
+                    onAllocate(currentAllocation + (selectedResource to currentAmount + 1))
+                }
+            }
+        )
+    ) {
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(12.dp))
@@ -379,176 +436,146 @@ fun PetDisplay(
                 .padding(horizontal = 6.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Vertical meter bars
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+            // Vertical meter bars arranged side by side horizontally
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.Bottom
             ) {
-                // Food meter column
-                MeterColumn(
-                    label = "C",
-                    value = scorer.meters[ResourceType.FOOD] ?: 0,
-                    minLimit = scorer.type.meterLimits[ResourceType.FOOD]?.first ?: 0,
-                    maxLimit = scorer.type.meterLimits[ResourceType.FOOD]?.second ?: 0,
-                    allocation = currentFoodAllocation,
-                    canAllocateMore = canAllocateMoreFood,
-                    onDecrement = {
-                        onAllocate(
-                            mapOf(
-                                ResourceType.FOOD to (currentFoodAllocation - 1).coerceAtLeast(0),
-                                ResourceType.WATER to currentWaterAllocation
-                            )
-                        )
-                    },
-                    onIncrement = {
-                        onAllocate(
-                            mapOf(
-                                ResourceType.FOOD to currentFoodAllocation + 1,
-                                ResourceType.WATER to currentWaterAllocation
-                            )
-                        )
-                    }
-                )
+                // Food meter
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "C",
+                        color = Color.White,
+                        fontSize = 7.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    VerticalMeterBar(
+                        value = scorer.meters[ResourceType.FOOD] ?: 0,
+                        allocation = currentAllocation[ResourceType.FOOD] ?: 0,
+                        minLimit = scorer.type.meterLimits[ResourceType.FOOD]?.first ?: 0,
+                        maxLimit = scorer.type.meterLimits[ResourceType.FOOD]?.second ?: 0,
+                        modifier = Modifier
+                            .width(12.dp)
+                            .height(48.dp)
+                    )
+                }
 
-                Spacer(modifier = Modifier.height(2.dp))
-
-                // Water meter column
-                MeterColumn(
-                    label = "A",
-                    value = scorer.meters[ResourceType.WATER] ?: 0,
-                    minLimit = scorer.type.meterLimits[ResourceType.WATER]?.first ?: 0,
-                    maxLimit = scorer.type.meterLimits[ResourceType.WATER]?.second ?: 0,
-                    allocation = currentWaterAllocation,
-                    canAllocateMore = canAllocateMoreWater,
-                    onDecrement = {
-                        onAllocate(
-                            mapOf(
-                                ResourceType.FOOD to currentFoodAllocation,
-                                ResourceType.WATER to (currentWaterAllocation - 1).coerceAtLeast(0)
-                            )
-                        )
-                    },
-                    onIncrement = {
-                        onAllocate(
-                            mapOf(
-                                ResourceType.FOOD to currentFoodAllocation,
-                                ResourceType.WATER to currentWaterAllocation + 1
-                            )
-                        )
-                    }
-                )
+                // Water meter
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "A",
+                        color = Color.White,
+                        fontSize = 7.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    VerticalMeterBar(
+                        value = scorer.meters[ResourceType.WATER] ?: 0,
+                        allocation = currentAllocation[ResourceType.WATER] ?: 0,
+                        minLimit = scorer.type.meterLimits[ResourceType.WATER]?.first ?: 0,
+                        maxLimit = scorer.type.meterLimits[ResourceType.WATER]?.second ?: 0,
+                        modifier = Modifier
+                            .width(12.dp)
+                            .height(48.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(4.dp))
 
-            // Pet image and name
+            // Pet image, name, and reset button
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Pet image
                 Image(
                     painter = painterResource(id = petImageRes),
                     contentDescription = scorer.name,
-                    modifier = Modifier.size(56.dp)
+                    modifier = Modifier.size(48.dp)
                 )
+
+                // Pet name
                 Text(
                     text = scorer.name,
                     color = Color.White,
-                    fontSize = 10.sp,
+                    fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    modifier = Modifier.width(56.dp)
+                    maxLines = 1
                 )
+
+                // Reset allocation button (only visible if there is any allocation)
+                val hasAllocation = currentAllocation.values.any { it > 0 }
+                if (hasAllocation) {
+                    Button(
+                        onClick = { onAllocate(emptyMap()) },
+                        modifier = Modifier.size(20.dp),
+                        contentPadding = PaddingValues(0.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFE57373),
+                            contentColor = Color.White
+                        ),
+                        shape = CircleShape
+                    ) {
+                        Text(
+                            text = "↺",
+                            fontSize = 10.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             }
         }
     }
 }
 
+// ─── Vertical Meter Bar ────────────────────────────────────────────────
+
 /**
- * A single vertical meter column for one resource type on a pet.
- * Shows a label, a vertical segmented bar, and allocation +/- controls.
+ * A vertical segmented meter bar.
+ * Fills from bottom to top. Segments in the negative zone (≤ 0) are colored
+ * orange-red when filled; segments in the positive zone (> 0) are colored
+ * green when filled. Allocation preview segments are light blue.
+ * Unfilled segments are semi-transparent.
+ *
+ * Three visual zones:
+ * - **Filled** (segment ≤ value): orange-red for ≤ 0, green for > 0
+ * - **Allocation preview** (value < segment ≤ value + allocation): light blue
+ * - **Empty** (segment > value + allocation): semi-transparent
  */
 @Composable
-fun MeterColumn(
-    label: String,
+fun VerticalMeterBar(
     value: Int,
+    allocation: Int,
     minLimit: Int,
     maxLimit: Int,
-    allocation: Int,
-    canAllocateMore: Boolean,
-    onDecrement: () -> Unit,
-    onIncrement: () -> Unit
+    modifier: Modifier = Modifier
 ) {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = modifier
+            .clip(RoundedCornerShape(4.dp))
+            .background(Color(0x30FFFFFF)),
+        verticalArrangement = Arrangement.Bottom
     ) {
-        // Label
-        Text(
-            text = label,
-            color = Color.White,
-            fontSize = 8.sp,
-            fontWeight = FontWeight.Bold
-        )
+        // Display segments from top (max) to bottom (min+1)
+        for (segment in maxLimit downTo (minLimit + 1)) {
+            val isFilled = segment <= value
+            val isAllocationPreview = !isFilled && segment <= value + allocation
 
-        Spacer(modifier = Modifier.height(2.dp))
-
-        // Vertical meter bar
-        VerticalMeterBar(
-            value = value,
-            minLimit = minLimit,
-            maxLimit = maxLimit,
-            modifier = Modifier
-                .width(12.dp)
-                .height(48.dp)
-        )
-
-        Spacer(modifier = Modifier.height(2.dp))
-
-        // Allocation controls row
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Decrement button (small circle)
-            Button(
-                onClick = onDecrement,
-                modifier = Modifier.size(18.dp),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFE57373),
-                    contentColor = Color.White
-                ),
-                shape = CircleShape
-            ) {
-                Text(text = "−", fontSize = 10.sp, textAlign = TextAlign.Center)
-            }
-
-            // Allocation count
-            Text(
-                text = allocation.toString(),
-                color = if (allocation > 0) Color(0xFFFFF176) else Color(0xFF9E9E9E),
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.width(12.dp),
-                textAlign = TextAlign.Center
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(1.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(
+                        when {
+                            isFilled && segment <= 0 -> Color(0xFFFF7043) // danger zone: orange-red
+                            isFilled -> Color(0xFF66BB6A)                 // good zone: green
+                            isAllocationPreview -> Color(0xFF4FC3F7)     // allocation preview: light blue
+                            else -> Color(0x40FFFFFF)                    // empty: semi-transparent
+                        }
+                    )
             )
-
-            // Increment button (small circle)
-            Button(
-                onClick = onIncrement,
-                modifier = Modifier.size(18.dp),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
-                enabled = canAllocateMore,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF66BB6A),
-                    contentColor = Color.White,
-                    disabledContainerColor = Color(0xFF424242),
-                    disabledContentColor = Color(0xFF757575)
-                ),
-                shape = CircleShape
-            ) {
-                Text(text = "+", fontSize = 10.sp, textAlign = TextAlign.Center)
-            }
         }
     }
 }
@@ -571,14 +598,14 @@ private fun sampleGameState(): GameState = GameState(
             name = "Firulais",
             type = ScorerType.DOG,
             givenAway = false,
-            meters = mapOf(ResourceType.FOOD to 3, ResourceType.WATER to 2),
+            meters = mapOf(ResourceType.FOOD to 2, ResourceType.WATER to 1),
             lastGeneratedScore = 7
         ),
         ScorerInstance(
             name = "Michi",
             type = ScorerType.CAT,
             givenAway = false,
-            meters = mapOf(ResourceType.FOOD to 1, ResourceType.WATER to 2),
+            meters = mapOf(ResourceType.FOOD to 1, ResourceType.WATER to 1),
             lastGeneratedScore = 5
         ),
         ScorerInstance(
@@ -615,58 +642,29 @@ private fun sampleGameState(): GameState = GameState(
 @Composable
 fun GameScreenPreview() {
     val state = sampleGameState()
-    val allocationMap = List(state.scorers.size) { emptyMap<ResourceType, Int>() }
-    val totalAllocated = emptyMap<ResourceType, Int>()
+
+    // Some pets have allocations to show the light blue preview effect
+    val allocationMap = listOf(
+        mapOf(ResourceType.FOOD to 1),                           // Firulais: +1 food
+        emptyMap<ResourceType, Int>(),                            // Michi: nothing
+        mapOf(ResourceType.WATER to 1),                           // Rex: +1 water
+        emptyMap<ResourceType, Int>(),                            // Pelusa: given away
+        mapOf(ResourceType.FOOD to 2, ResourceType.WATER to 1),  // Luna: +2 food, +1 water
+    )
+
+    val totalAllocated = allocationMap.fold(emptyMap<ResourceType, Int>()) { acc, map ->
+        acc + map.mapValues { (key, value) -> (acc[key] ?: 0) + value }
+    }
 
     AngelOrphanageTheme {
         GameScreenContent(
             gameState = state,
             allocationMap = allocationMap,
             totalAllocated = totalAllocated,
+            selectedResource = ResourceType.FOOD,
             onAllocate = { _, _ -> },
-            onRunTurn = {}
+            onRunTurn = {},
+            onSelectResource = {}
         )
-    }
-}
-
-/**
- * A vertical segmented meter bar.
- * Fills from bottom to top. Segments in the negative zone (≤ 0) are colored
- * orange-red when filled; segments in the positive zone (> 0) are colored
- * green when filled. Unfilled segments are semi-transparent gray.
- */
-@Composable
-fun VerticalMeterBar(
-    value: Int,
-    minLimit: Int,
-    maxLimit: Int,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(Color(0x30FFFFFF)),
-        verticalArrangement = Arrangement.Bottom
-    ) {
-        // Display segments from top (max) to bottom (min+1)
-        for (segment in maxLimit downTo (minLimit + 1)) {
-            val isFilled = segment <= value
-            val isNegativeZone = segment <= 0
-
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(1.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(
-                        when {
-                            !isFilled -> Color(0x40FFFFFF) // unfilled: semi-transparent
-                            isNegativeZone -> Color(0xFFFF7043) // danger zone: orange-red
-                            else -> Color(0xFF66BB6A) // good zone: green
-                        }
-                    )
-            )
-        }
     }
 }
