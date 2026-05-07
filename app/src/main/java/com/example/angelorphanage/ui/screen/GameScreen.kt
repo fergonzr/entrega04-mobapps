@@ -32,18 +32,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.angelorphanage.R
 import com.example.angelorphanage.domain.GameState
 import com.example.angelorphanage.domain.ResourceType
 import com.example.angelorphanage.domain.ScorerInstance
 import com.example.angelorphanage.domain.ScorerType
+import com.example.angelorphanage.ui.theme.AngelOrphanageTheme
 
 /**
  * Predefined arbitrary positions for pets in the salon room.
@@ -99,6 +100,40 @@ fun GameScreen(onGameFinished: (GameState) -> Unit) {
         }
     }
 
+    GameScreenContent(
+        gameState = gameState,
+        allocationMap = allocationMap,
+        totalAllocated = totalAllocated,
+        onAllocate = { index, newAllocation ->
+            val newAllocationMap = allocationMap.toMutableList()
+            if (index < newAllocationMap.size) {
+                newAllocationMap[index] = newAllocation
+            }
+            allocationMap = newAllocationMap
+        },
+        onRunTurn = {
+            val paddedAllocation = allocationMap +
+                    List(
+                        maxOf(0, gameState.scorers.size - allocationMap.size)
+                    ) { emptyMap<ResourceType, Int>() }
+            gameState = gameState.run(paddedAllocation)
+            allocationMap = List(gameState.scorers.size) { emptyMap() }
+        }
+    )
+}
+
+/**
+ * Stateless rendering of the game screen. Accepts all display data and
+ * callbacks as parameters so it can be previewed with a fixed GameState.
+ */
+@Composable
+fun GameScreenContent(
+    gameState: GameState,
+    allocationMap: List<Map<ResourceType, Int>>,
+    totalAllocated: Map<ResourceType, Int>,
+    onAllocate: (Int, Map<ResourceType, Int>) -> Unit,
+    onRunTurn: () -> Unit
+) {
     Box(modifier = Modifier.fillMaxSize()) {
         // Background — the salon room image
         Image(
@@ -157,11 +192,7 @@ fun GameScreen(onGameFinished: (GameState) -> Unit) {
                         canAllocateMoreFood = canAllocateMoreFood,
                         canAllocateMoreWater = canAllocateMoreWater,
                         onAllocate = { newAllocation ->
-                            val newAllocationMap = allocationMap.toMutableList()
-                            if (index < newAllocationMap.size) {
-                                newAllocationMap[index] = newAllocation
-                            }
-                            allocationMap = newAllocationMap
+                            onAllocate(index, newAllocation)
                         },
                         modifier = Modifier.offset(
                             x = areaWidth * xFraction,
@@ -174,14 +205,7 @@ fun GameScreen(onGameFinished: (GameState) -> Unit) {
 
         // Bottom-left: Run turn button
         Button(
-            onClick = {
-                val paddedAllocation = allocationMap +
-                        List(
-                            maxOf(0, gameState.scorers.size - allocationMap.size)
-                        ) { emptyMap<ResourceType, Int>() }
-                gameState = gameState.run(paddedAllocation)
-                allocationMap = List(gameState.scorers.size) { emptyMap() }
-            },
+            onClick = onRunTurn,
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(start = 16.dp, bottom = 12.dp),
@@ -214,7 +238,6 @@ fun TopHudBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color.Black.copy(alpha = 0.55f))
             .padding(horizontal = 12.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -527,6 +550,82 @@ fun MeterColumn(
                 Text(text = "+", fontSize = 10.sp, textAlign = TextAlign.Center)
             }
         }
+    }
+}
+
+// ─── Preview ──────────────────────────────────────────────────────────
+
+/**
+ * Constructs a sample GameState for preview purposes with a mix of
+ * happy and sad pets at various meter levels.
+ */
+private fun sampleGameState(): GameState = GameState(
+    score = 420,
+    elapsedTurns = 7,
+    level = 2,
+    powerups = setOf(),
+    powerUpsUnlocked = true,
+    finished = false,
+    scorers = listOf(
+        ScorerInstance(
+            name = "Firulais",
+            type = ScorerType.DOG,
+            givenAway = false,
+            meters = mapOf(ResourceType.FOOD to 3, ResourceType.WATER to 2),
+            lastGeneratedScore = 7
+        ),
+        ScorerInstance(
+            name = "Michi",
+            type = ScorerType.CAT,
+            givenAway = false,
+            meters = mapOf(ResourceType.FOOD to 1, ResourceType.WATER to 2),
+            lastGeneratedScore = 5
+        ),
+        ScorerInstance(
+            name = "Rex",
+            type = ScorerType.DOG,
+            givenAway = false,
+            meters = mapOf(ResourceType.FOOD to -1, ResourceType.WATER to 0),
+            lastGeneratedScore = -1
+        ),
+        ScorerInstance(
+            name = "Pelusa",
+            type = ScorerType.CAT,
+            givenAway = true,
+            meters = mapOf(ResourceType.FOOD to 1, ResourceType.WATER to 2),
+            lastGeneratedScore = 4
+        ),
+        ScorerInstance(
+            name = "Luna",
+            type = ScorerType.DOG,
+            givenAway = false,
+            meters = mapOf(ResourceType.FOOD to 0, ResourceType.WATER to -1),
+            lastGeneratedScore = -2
+        ),
+    ),
+    currentResources = mapOf(ResourceType.FOOD to 3, ResourceType.WATER to 4)
+)
+
+@Preview(
+    name = "Game Screen Landscape",
+    showBackground = true,
+    widthDp = 640,
+    heightDp = 360
+)
+@Composable
+fun GameScreenPreview() {
+    val state = sampleGameState()
+    val allocationMap = List(state.scorers.size) { emptyMap<ResourceType, Int>() }
+    val totalAllocated = emptyMap<ResourceType, Int>()
+
+    AngelOrphanageTheme {
+        GameScreenContent(
+            gameState = state,
+            allocationMap = allocationMap,
+            totalAllocated = totalAllocated,
+            onAllocate = { _, _ -> },
+            onRunTurn = {}
+        )
     }
 }
 
