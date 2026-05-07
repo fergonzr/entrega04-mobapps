@@ -10,6 +10,7 @@
       devShells.${system}.default = pkgs.mkShell {
         packages = with pkgs; [
         	kotlin
+        	gradle
         ];
       };
     };
