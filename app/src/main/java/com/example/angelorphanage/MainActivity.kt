@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.example.angelorphanage.ui.GameScreen
+import com.example.angelorphanage.ui.AppNavigation
 import com.example.angelorphanage.ui.theme.AngelOrphanageTheme
 
 class MainActivity : ComponentActivity() {
@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.safeDrawingPadding()
                         .fillMaxSize()
                 ) {
-                    GameScreen()
+                    AppNavigation()
                 }
             }
         }

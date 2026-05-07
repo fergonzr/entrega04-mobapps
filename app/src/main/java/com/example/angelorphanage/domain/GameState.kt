@@ -1,6 +1,6 @@
 package com.example.angelorphanage.domain
 
-import android.R
+
 
 /**
  * The immutable state of the game
@@ -14,8 +14,8 @@ data class GameState(
     val level: Int,
     val powerups: Set<Powerup>,
     val powerUpsUnlocked: Boolean,
-    val baseParameters: GameParameters = BaseGameParameters()
-    val finished: Boolean
+    val baseParameters: GameParameters = BaseGameParameters(),
+    val finished: Boolean,
 ) {
     constructor(): this(
         score = 0,

@@ -1,4 +1,4 @@
-package com.example.angelorphanage.ui
+package com.example.angelorphanage.ui.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,6 +20,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,10 +38,17 @@ import com.example.angelorphanage.domain.ResourceType
 import com.example.angelorphanage.domain.ScorerInstance
 
 @Composable
-fun GameScreen() {
+fun GameScreen(onGameFinished: (GameState) -> Unit) {
     // Game state management
     var gameState by remember { mutableStateOf(GameState()) }
     var allocationMap by remember { mutableStateOf<List<Map<ResourceType, Int>>>(List(gameState.scorers.size) { emptyMap() }) }
+
+    // Navigate to end screen when game is finished
+    LaunchedEffect(gameState.finished) {
+        if (gameState.finished) {
+            onGameFinished(gameState)
+        }
+    }
 
     // Calculate total allocated resources
     val totalAllocated = remember(allocationMap) {
