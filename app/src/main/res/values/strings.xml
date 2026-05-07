@@ -4,8 +4,12 @@
     <string name="water_label">Agua</string>
     <string name="dog_label">Perro</string>
     <string name="cat_label">Gato</string>
-    <string name="decoration_label">Decoración</string>
-    <string name="decoration_desc">Tus mascotas se sienten más a gusto en tu orfanato cuando se ve bonito.</string>
-    <string name="visibility_label">Visibilidad</string>
-    <string name="visibility_desc">Haz tu orfanato más visible para los animales perdidos.</string>
+    <string name="comfort_label">Mimos</string>
+    <string name="comfort_desc">Tus mascotas generan más puntos cuando sus necesidades están cubiertas.</string>
+    <string name="adoption_marketing_label">Marketing de adopción</string>
+    <string name="adoption_marketing_desc">Aumenta la probabilidad de que tus mascotas sean adoptadas cuando están felices.</string>
+    <string name="food_increment_label">Incremento de comida</string>
+    <string name="food_increment_desc">Genera más comida por turno para alimentar a tus mascotas.</string>
+    <string name="water_increment_label">Incremento de agua</string>
+    <string name="water_increment_desc">Genera más agua por turno para hidratar a tus mascotas.</string>
 </resources>
