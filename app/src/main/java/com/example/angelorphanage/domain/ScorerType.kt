@@ -42,9 +42,11 @@ enum class ScorerType(
             parameters: GameParameters,
             meters: Map<ResourceType, Int>
         ): Boolean {
-            return meters
-                .all { it.value == this.meterLimits[it.key]!!.second }
-                    && Random.nextInt(100) >= 80
+            val metersFull = meters.all { it.value == this.meterLimits[it.key]!!.second }
+            if (!metersFull) return false
+            // 20% base chance, each visibility level adds ~26.7%, reaching 100% at max level (3)
+            val chance = (20 + parameters.getVisibility() * 27).coerceAtMost(100)
+            return Random.nextInt(100) < chance
         }
 
     },
@@ -80,9 +82,11 @@ enum class ScorerType(
             parameters: GameParameters,
             meters: Map<ResourceType, Int>
         ): Boolean {
-            return meters
-                .all { it.value == this.meterLimits[it.key]!!.second }
-                    && Random.nextInt(100) >= 70
+            val metersFull = meters.all { it.value == this.meterLimits[it.key]!!.second }
+            if (!metersFull) return false
+            // 30% base chance, each visibility level adds ~23.3%, reaching 100% at max level (3)
+            val chance = (30 + parameters.getVisibility() * 24).coerceAtMost(100)
+            return Random.nextInt(100) < chance
         }
 
     };

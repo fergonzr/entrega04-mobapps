@@ -1,5 +1,7 @@
 package com.example.angelorphanage.domain
 
+import android.R
+
 /**
  * The immutable state of the game
  */
@@ -9,15 +11,21 @@ data class GameState(
     val elapsedTurns: Int,
     val scorers: List<ScorerInstance>,
     val currentResources: Map<ResourceType, Int>,
+    val level: Int,
     val powerups: Set<Powerup>,
+    val powerUpsUnlocked: Boolean,
     val baseParameters: GameParameters = BaseGameParameters()
+    val finished: Boolean
 ) {
     constructor(): this(
         score = 0,
         elapsedTurns = 0,
-        scorers = (0..2).map { adquire() }.toList(),
+        scorers = (0 until newpets_per_level(1)).map { adquire() }.toList(),
         currentResources = ResourceType.entries.associateWith { it.initialValue },
-        powerups = setOf()
+        powerups = setOf(),
+        powerUpsUnlocked = false,
+        level = 1,
+        finished = false,
     )
 
     /**
@@ -55,6 +63,10 @@ data class GameState(
             }
         }
 
+        val leveledUp = newScorers.total_givenaway_pets() >= givenaway_pet_level_target(this.level)
+        val newLevel = level + if (leveledUp) 1 else 0
+        val finished = newLevel >= maxGameLevel
+
         // Process each scorer to create new instances with updated state
         val finalScorers = newScorers.mapIndexed { index, scorer ->
             if (scorer.givenAway) {
@@ -69,14 +81,25 @@ data class GameState(
         return this.copy(
             score = newScore,
             elapsedTurns = this.elapsedTurns + 1,
-            scorers = finalScorers.try_adquire_new(this.get_parameters()),
+            level = newLevel,
+            scorers =
+                if (finished) newScorers
+                else if (leveledUp) finalScorers.adquire_new_pets_for_level(newLevel)
+                else finalScorers,
             currentResources = newResources
                 .map { it.key to (it.value + it.key.generate(this.get_parameters())) }
-                .associate { it }
+                .associate { it },
+            powerUpsUnlocked = this.powerUpsUnlocked || leveledUp,
+            finished = finished
         )
     }
 
     fun buy_powerup(powerUp: Powerup): GameState {
+        if (this.score < powerUp.type.costPerlevel)
+            throw InsufficientScoreException()
+
+        val newScore = this.score - powerUp.type.costPerlevel
+
         val newPowerup =
         if (this.powerups.contains(powerUp))
             this.powerups.first {it == powerUp} + powerUp
@@ -85,7 +108,8 @@ data class GameState(
 
         return this.copy(
             powerups = setOf(
-                *this.powerups.toTypedArray(), newPowerup)
+                *this.powerups.toTypedArray(), newPowerup),
+            score = newScore
         )
     }
 
@@ -100,14 +124,14 @@ data class GameState(
             .apply(this.baseParameters)
     }
 
-    // Try to adquire a new scorer and return the new scorers list
-    private fun List<ScorerInstance>.try_adquire_new(parameters: GameParameters): List<ScorerInstance> {
-        val newScorer = try_adquire(parameters)
-
-        if (newScorer != null)
-            return this + newScorer
-        return this
+    // Adquire new scorers when leveling up and return the updated scorers list
+    private fun List<ScorerInstance>.adquire_new_pets_for_level(level: Int): List<ScorerInstance> {
+        val newScorers = (0 until newpets_per_level(level)).map { adquire() }
+        return this + newScorers
     }
+
+    private fun List<ScorerInstance>.total_givenaway_pets(): Int =
+        this.count { it.givenAway }
 
     private operator fun Map<ResourceType, Int>.plus(other: Map<ResourceType, Int>): Map<ResourceType, Int> =
         this.keys
