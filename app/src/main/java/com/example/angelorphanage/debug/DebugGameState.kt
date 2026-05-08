@@ -18,6 +18,9 @@ import com.example.angelorphanage.domain.newpets_per_level
  */
 const val ENABLE_DEBUG = true
 
+/** Maximum active (non-givenaway) pets the UI can display simultaneously. */
+private const val MAX_ACTIVE_PETS = 6
+
 /**
  * Generates a plausible [GameState] for the given [level].
  *
@@ -34,7 +37,9 @@ fun debugGameStateForLevel(level: Int): GameState {
     val totalPetsEver = (1..level).sumOf { newpets_per_level(it) }
     val givenAwayTarget = givenaway_pet_level_target(level - 1).coerceAtLeast(0)
     val givenAwayCount = givenAwayTarget.coerceAtMost(totalPetsEver)
-    val activePetCount = totalPetsEver - givenAwayCount
+    // The game never has more than MAX_ACTIVE_PETS active pets at once;
+    // cap here so debug states stay within the display limit.
+    val activePetCount = (totalPetsEver - givenAwayCount).coerceAtMost(MAX_ACTIVE_PETS)
 
     // Build the scorers list
     val scorers = mutableListOf<ScorerInstance>()

@@ -53,23 +53,24 @@ import com.example.angelorphanage.domain.ScorerInstance
 import com.example.angelorphanage.domain.ScorerType
 
 /**
- * Predefined arbitrary positions for pets in the salon room.
+ * Maximum number of active (non-givenaway) pets that can be displayed at once.
+ * The game logic ensures there are never more than this many active pets.
+ */
+private const val MAX_ACTIVE_PETS = 6
+
+/**
+ * Fixed display positions for pets in the salon room.
  * Each pair is (xFraction, yFraction) relative to the center play area.
- * Pets are assigned positions in order of their index in the scorers list.
+ * Active pets are dynamically mapped to these positions; when a pet is given
+ * away, its position is freed for the next incoming pet.
  */
 private val PET_POSITIONS = listOf(
-    0.24f to 0.65f,
-    0.28f to 0.02f,
-    0.52f to 0.10f,
-    0.76f to 0.04f,
-    0.08f to 0.40f,
-    0.32f to 0.44f,
-    0.56f to 0.38f,
-    0.80f to 0.42f,
-    0.16f to 0.72f,
-    0.42f to 0.68f,
-    0.66f to 0.70f,
-    0.88f to 0.25f,
+    0.10f to 0.08f,
+    0.40f to 0.02f,
+    0.70f to 0.06f,
+    0.14f to 0.55f,
+    0.44f to 0.50f,
+    0.74f to 0.56f,
 )
 
 /**
@@ -97,6 +98,10 @@ fun GameScreen(
     var selectedResource by remember { mutableStateOf<ResourceType?>(null) }
     var hasLoaded by remember { mutableStateOf(debugInitialState != null) }
 
+    // Dynamic mapping from active pet names to display positions (0 until MAX_ACTIVE_PETS).
+    // Given-away pets are removed; new pets are assigned to freed positions.
+    var petPositionMap by remember { mutableStateOf(mapOf<String, Int>()) }
+
     // Load saved game on first composition (skip if debug state was provided)
     LaunchedEffect(Unit) {
         if (debugInitialState == null) {
@@ -122,6 +127,16 @@ fun GameScreen(
                 List(gameState.scorers.size - allocationMap.size) { emptyMap<ResourceType, Int>() }
     }
 
+    // Update pet position map: remove given-away pets, assign new pets to free positions
+    val activePetNames = gameState.scorers.filter { !it.givenAway }.map { it.name }.toSet()
+    petPositionMap = petPositionMap.toMutableMap().apply {
+        keys.retainAll { it in activePetNames }
+        val usedPositions = values.toSet()
+        val freePositions = (0 until MAX_ACTIVE_PETS).filter { it !in usedPositions }
+        val unassignedPets = activePetNames.filter { it !in this }
+        unassignedPets.zip(freePositions).forEach { (name, pos) -> this[name] = pos }
+    }
+
     // Navigate to end screen when game is finished
     LaunchedEffect(gameState.finished) {
         if (gameState.finished) {
@@ -141,6 +156,7 @@ fun GameScreen(
         gameState = gameState,
         allocationMap = allocationMap,
         totalAllocated = totalAllocated,
+        petPositionMap = petPositionMap,
         selectedResource = selectedResource,
         onAllocate = { index, newAllocation ->
             val newAllocationMap = allocationMap.toMutableList()
@@ -172,6 +188,7 @@ fun GameScreenContent(
     gameState: GameState,
     allocationMap: List<Map<ResourceType, Int>>,
     totalAllocated: Map<ResourceType, Int>,
+    petPositionMap: Map<String, Int>,
     selectedResource: ResourceType?,
     onAllocate: (Int, Map<ResourceType, Int>) -> Unit,
     onRunTurn: () -> Unit,
@@ -208,11 +225,12 @@ fun GameScreenContent(
             val areaWidth = maxWidth
             val areaHeight = maxHeight
 
-            gameState.scorers.forEachIndexed { index, scorer ->
-                if (!scorer.givenAway && index < PET_POSITIONS.size) {
-                    val (xFraction, yFraction) = PET_POSITIONS[index]
+            gameState.scorers.forEachIndexed { scorerIndex, scorer ->
+                val displayPosition = petPositionMap[scorer.name] ?: return@forEachIndexed
+                if (!scorer.givenAway) {
+                    val (xFraction, yFraction) = PET_POSITIONS[displayPosition]
 
-                    val currentAllocation = allocationMap.getOrElse(index) { emptyMap() }
+                    val currentAllocation = allocationMap.getOrElse(scorerIndex) { emptyMap() }
 
                     // Compute per-resource allocation availability for this pet
                     val canAllocateMore = ResourceType.entries.associateWith { resType ->
@@ -230,7 +248,7 @@ fun GameScreenContent(
                         canAllocateMore = canAllocateMore,
                         selectedResource = selectedResource,
                         onAllocate = { newAllocation ->
-                            onAllocate(index, newAllocation)
+                            onAllocate(scorerIndex, newAllocation)
                         },
                         modifier = Modifier.offset(
                             x = areaWidth * xFraction,
@@ -636,11 +654,18 @@ fun GameScreenPreview() {
         acc + map.mapValues { (key, value) -> (acc[key] ?: 0) + value }
     }
 
+    // Map active pet names to display positions
+    val petPositionMap = state.scorers
+        .filter { !it.givenAway }
+        .mapIndexed { idx, scorer -> scorer.name to idx }
+        .toMap()
+
     AngelOrphanageTheme {
         GameScreenContent(
             gameState = state,
             allocationMap = allocationMap,
             totalAllocated = totalAllocated,
+            petPositionMap = petPositionMap,
             selectedResource = ResourceType.FOOD,
             onAllocate = { _, _ -> },
             onRunTurn = {},
