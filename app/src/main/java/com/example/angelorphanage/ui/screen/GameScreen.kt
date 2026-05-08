@@ -55,7 +55,7 @@ import com.example.angelorphanage.ui.theme.AngelOrphanageTheme
  * Pets are assigned positions in order of their index in the scorers list.
  */
 private val PET_POSITIONS = listOf(
-    0.04f to 0.05f,
+    0.24f to 0.65f,
     0.28f to 0.02f,
     0.52f to 0.10f,
     0.76f to 0.04f,
@@ -430,10 +430,6 @@ fun PetDisplay(
         )
     ) {
         Row(
-            modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.Black.copy(alpha = 0.4f))
-                .padding(horizontal = 6.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Vertical meter bars arranged side by side horizontally
@@ -445,7 +441,7 @@ fun PetDisplay(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "C",
-                        color = Color.White,
+                        color = Color.Black,
                         fontSize = 7.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -464,7 +460,7 @@ fun PetDisplay(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "A",
-                        color = Color.White,
+                        color = Color.Black,
                         fontSize = 7.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -482,47 +478,53 @@ fun PetDisplay(
 
             Spacer(modifier = Modifier.width(4.dp))
 
-            // Pet image, name, and reset button
+            // Pet name, image, and reset button
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Pet image
+                // Pet name (above image)
+                // Pet image with reset button to its right
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = scorer.name,
+                        color = Color.Black,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        modifier = Modifier.padding(horizontal=4.dp)
+                    )
+
+                    // Reset allocation button (only visible if there is any allocation)
+                    val hasAllocation = currentAllocation.values.any { it > 0 }
+                    if (hasAllocation) {
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Button(
+                            onClick = { onAllocate(emptyMap()) },
+                            modifier = Modifier.size(20.dp),
+                            contentPadding = PaddingValues(0.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFE57373),
+                                contentColor = Color.White
+                            ),
+                            shape = CircleShape
+                        ) {
+                            Text(
+                                text = "↺",
+                                fontSize = 10.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
                 Image(
                     painter = painterResource(id = petImageRes),
                     contentDescription = scorer.name,
                     modifier = Modifier.size(48.dp)
                 )
 
-                // Pet name
-                Text(
-                    text = scorer.name,
-                    color = Color.White,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1
-                )
-
-                // Reset allocation button (only visible if there is any allocation)
-                val hasAllocation = currentAllocation.values.any { it > 0 }
-                if (hasAllocation) {
-                    Button(
-                        onClick = { onAllocate(emptyMap()) },
-                        modifier = Modifier.size(20.dp),
-                        contentPadding = PaddingValues(0.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFE57373),
-                            contentColor = Color.White
-                        ),
-                        shape = CircleShape
-                    ) {
-                        Text(
-                            text = "↺",
-                            fontSize = 10.sp,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
             }
         }
     }
