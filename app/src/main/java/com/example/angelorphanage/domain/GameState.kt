@@ -122,7 +122,8 @@ data class GameState(
 
         return this.powerups
             .sortedBy { it.type.order }
-            .reduce { acc, powerup ->  acc + powerup }
+            .map { it as GameParameterDiff }
+            .reduce { acc, powerup ->  powerup.add(acc) }
             .apply(this.baseParameters)
     }
 

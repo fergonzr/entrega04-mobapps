@@ -23,7 +23,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -156,7 +155,7 @@ fun StarRating(rating: Int) {
         for (i in 1..5) {
             Image(
                 painter = painterResource(
-                    id = if (i <= rating) R.drawable.estrellacompleta else R.drawable.estrella
+                    id = if (i <= rating) R.drawable.estrellacompleta else R.drawable.estrellacompleta
                 ),
                 contentDescription = if (i <= rating) "Estrella completa" else "Estrella vacía",
                 modifier = Modifier.size(48.dp)

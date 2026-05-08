@@ -1,4 +1,3 @@
-AngelOrphanage/app/src/main/java/com/example/angelorphanage/ui/screen/PowerupStoreDialog.kt
 package com.example.angelorphanage.ui.screen
 
 import androidx.compose.foundation.background
@@ -9,11 +8,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -21,6 +23,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,10 +37,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.window.DialogProperties
 import com.example.angelorphanage.R
+import com.example.angelorphanage.debug.RICH_DEBUG_STATE
 import com.example.angelorphanage.domain.GameState
 import com.example.angelorphanage.domain.Powerup
 import com.example.angelorphanage.domain.PowerupType
+import com.example.angelorphanage.ui.theme.AngelOrphanageTheme
 
 // ─── Colors ────────────────────────────────────────────────────────────
 
@@ -118,9 +125,15 @@ fun PowerupStoreDialog(
 
     val availablePoints = gameState.score
 
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false
+        )
+    ) {
         Column(
             modifier = Modifier
+                .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
                 .background(DialogBackground)
                 .padding(16.dp),
@@ -153,31 +166,37 @@ fun PowerupStoreDialog(
 
             HorizontalDivider(color = Color(0xFF333355))
 
-            // ── Powerup cards ───────────────────────────────────────
-            PowerupType.entries.sortedBy { it.order }.forEach { type ->
-                val currentLevel = currentLevels[type] ?: 0
-                val pendingLevels = pendingPurchases[type] ?: 0
-                val newLevel = currentLevel + pendingLevels
-                val canBuyMore = newLevel < type.maxLevel
-                        && (totalPendingCost + type.costPerlevel) <= availablePoints
-                val isSelected = pendingLevels > 0
+            val powerupTypes = PowerupType.entries.sortedBy { it.order }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                powerupTypes.forEach { type ->
+                    val currentLevel = currentLevels[type] ?: 0
+                    val pendingLevels = pendingPurchases[type] ?: 0
+                    val newLevel = currentLevel + pendingLevels
+                    val canBuyMore = newLevel < type.maxLevel
+                            && (totalPendingCost + type.costPerlevel) <= availablePoints
+                    val isSelected = pendingLevels > 0
 
-                PowerupCard(
-                    type = type,
-                    currentLevel = currentLevel,
-                    pendingLevels = pendingLevels,
-                    maxLevel = type.maxLevel,
-                    costPerLevel = type.costPerlevel,
-                    isSelected = isSelected,
-                    canBuyMore = canBuyMore,
-                    onTap = {
-                        if (canBuyMore) {
-                            pendingPurchases = pendingPurchases.toMutableMap().apply {
-                                this[type] = (this[type] ?: 0) + 1
+                    PowerupCard(
+                        type = type,
+                        currentLevel = currentLevel,
+                        pendingLevels = pendingLevels,
+                        maxLevel = type.maxLevel,
+                        costPerLevel = type.costPerlevel,
+                        isSelected = isSelected,
+                        canBuyMore = canBuyMore,
+                        onTap = {
+                            if (canBuyMore) {
+                                pendingPurchases = pendingPurchases.toMutableMap().apply {
+                                    this[type] = (this[type] ?: 0) + 1
+                                }
                             }
-                        }
-                    }
-                )
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                    )
+                }
             }
 
             // ── Total cost ──────────────────────────────────────────
@@ -275,64 +294,49 @@ private fun PowerupCard(
     costPerLevel: Int,
     isSelected: Boolean,
     canBuyMore: Boolean,
-    onTap: () -> Unit
+    onTap: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val newLevel = currentLevel + pendingLevels
     val cardBackground = if (isSelected) SelectedCardBackground else CardBackground
     val borderColor = if (isSelected) AccentPurple else Color(0xFF333366)
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
+    Column(
+        modifier = modifier
+            .widthIn(min = 500.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(cardBackground)
             .border(1.dp, borderColor, RoundedCornerShape(8.dp))
             .clickable(enabled = canBuyMore, onClick = onTap)
             .padding(horizontal = 10.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        // Emoji icon
-        Text(
-            text = POWERUP_ICONS[type] ?: "\u2728",
-            fontSize = 22.sp
-        )
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        // Name and description
-        Column(
-            modifier = Modifier.weight(1f)
+        // Top row: emoji + name + level dots
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            Text(
+                text = POWERUP_ICONS[type] ?: "\u2728",
+                fontSize = 22.sp
+            )
+            Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = stringResource(type.labelRes()),
                 color = Color.White,
                 fontSize = 13.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f)
             )
-            Text(
-                text = stringResource(type.descriptionRes()),
-                color = MutedText,
-                fontSize = 10.sp,
-                lineHeight = 13.sp
-            )
-        }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        // Level indicator dots + cost
-        Column(
-            horizontalAlignment = Alignment.End
-        ) {
-            // Level dots: filled = current, preview = pending, empty = available
+            // Level dots
             Row(
                 horizontalArrangement = Arrangement.spacedBy(3.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 for (i in 1..maxLevel) {
                     val dotColor = when {
-                        i <= currentLevel -> ConfirmGreen        // already owned
-                        i <= newLevel -> PreviewBlue             // pending purchase
-                        else -> Color(0x40FFFFFF)                // empty slot
+                        i <= currentLevel -> ConfirmGreen
+                        i <= newLevel -> PreviewBlue
+                        else -> Color(0x40FFFFFF)
                     }
                     Box(
                         modifier = Modifier
@@ -349,13 +353,47 @@ private fun PowerupCard(
                     fontWeight = FontWeight.Bold
                 )
             }
-
-            // Cost per level
-            Text(
-                text = "$costPerLevel \uD83E\uDE99/nivel",
-                color = PointsGold,
-                fontSize = 10.sp
-            )
         }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Description
+        Text(
+            text = stringResource(type.descriptionRes()),
+            color = MutedText,
+            fontSize = 10.sp,
+            lineHeight = 13.sp
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Cost per level (right-aligned)
+        Text(
+            text = "$costPerLevel \uD83E\uDE99/nivel",
+            color = PointsGold,
+            fontSize = 10.sp,
+            modifier = Modifier.align(Alignment.End)
+        )
+    }
+}
+
+// ─── Preview ──────────────────────────────────────────────────────────
+
+@Preview(
+    name = "Powerup Store Dialog",
+    showBackground = true,
+    widthDp = 400,
+    heightDp = 500
+)
+@Composable
+fun PowerupStoreDialogPreview() {
+    // RICH_DEBUG_STATE has score=420 and one COMFORT powerup at level 1,
+    // which is ideal for previewing: some owned, some affordable.
+    AngelOrphanageTheme {
+        PowerupStoreDialog(
+            gameState = RICH_DEBUG_STATE,
+            onConfirm = {},
+            onDismiss = {}
+        )
     }
 }

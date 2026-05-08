@@ -1,5 +1,6 @@
 package com.example.angelorphanage.ui.screen
 
+import com.example.angelorphanage.ui.screen.PowerupStoreDialog
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
