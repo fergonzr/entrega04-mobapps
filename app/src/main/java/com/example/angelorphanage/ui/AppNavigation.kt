@@ -159,7 +159,8 @@ fun AppNavigation(
                         navController.navigate(Routes.Title) {
                             popUpTo(Routes.End) { inclusive = true }
                         }
-                    }
+                    },
+                    gameRepository = repository,
                 )
             }
         }

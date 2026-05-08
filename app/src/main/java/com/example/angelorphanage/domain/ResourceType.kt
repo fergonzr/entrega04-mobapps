@@ -9,12 +9,12 @@ enum class ResourceType(
     @param:StringRes val nameRes: Int,
     val initialValue: Int
 ) : Resource {
-    FOOD(R.string.food_label, 2) {
+    FOOD(R.string.food_label, 1) {
         override fun generate(parameters: GameParameters): Int {
             return parameters.getFoodMultiplier()
         }
     },
-    WATER(R.string.water_label, 3) {
+    WATER(R.string.water_label, 2) {
         override fun generate(parameters: GameParameters): Int {
             return parameters.getWaterMultiplier()
         }

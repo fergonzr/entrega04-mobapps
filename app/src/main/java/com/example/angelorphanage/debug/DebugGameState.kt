@@ -86,8 +86,8 @@ fun debugGameStateForLevel(level: Int): GameState {
         elapsedTurns = elapsedTurns,
         scorers = scorers,
         currentResources = mapOf(
-            ResourceType.FOOD to (2 + level),
-            ResourceType.WATER to (3 + level)
+            ResourceType.FOOD to (1 + level),
+            ResourceType.WATER to (2 + level)
         ),
         level = level,
         powerups = powerups,
@@ -158,7 +158,7 @@ val RICH_DEBUG_STATE: GameState = GameState(
             lastGeneratedScore = 0
         )
     ),
-    currentResources = mapOf(ResourceType.FOOD to 3, ResourceType.WATER to 4)
+    currentResources = mapOf(ResourceType.FOOD to 2, ResourceType.WATER to 3)
 )
 
 // ─── Helpers ───────────────────────────────────────────────────────────

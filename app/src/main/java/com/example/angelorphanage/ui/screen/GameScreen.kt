@@ -144,7 +144,6 @@ fun GameScreen(
     // Navigate to end screen when game is finished
     LaunchedEffect(gameState.finished) {
         if (gameState.finished) {
-            repository.clearCurrentGame()
             onGameFinished(gameState)
         }
     }
@@ -362,7 +361,7 @@ fun TopHudBar(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            InfoBadge(icon = "⭐", label = "Nivel", value = level.toString())
+            InfoBadge(icon = "Lvl", label = "Nivel", value = level.toString())
             InfoBadge(icon = "📅", label = "Día", value = elapsedTurns.toString())
             InfoBadge(icon = "🪙", label = "Monedas", value = score.toString())
         }
@@ -436,7 +435,7 @@ fun InfoBadge(icon: String, label: String, value: String) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        Text(text = icon, fontSize = 14.sp)
+        Text(text = icon, fontSize = 14.sp, color = Color.White)
         Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = value,
