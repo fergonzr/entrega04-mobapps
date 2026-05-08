@@ -102,6 +102,9 @@ fun GameScreen(
     // Given-away pets are removed; new pets are assigned to freed positions.
     var petPositionMap by remember { mutableStateOf(mapOf<String, Int>()) }
 
+    // Whether the powerup store dialog is currently visible
+    var showPowerupStore by remember { mutableStateOf(false) }
+
     // Load saved game on first composition (skip if debug state was provided)
     LaunchedEffect(Unit) {
         if (debugInitialState == null) {
@@ -175,8 +178,21 @@ fun GameScreen(
         },
         onSelectResource = { resourceType ->
             selectedResource = if (selectedResource == resourceType) null else resourceType
-        }
+        },
+        onOpenPowerupStore = { showPowerupStore = true }
     )
+
+    // Powerup store dialog
+    if (showPowerupStore) {
+        PowerupStoreDialog(
+            gameState = gameState,
+            onConfirm = { newState ->
+                gameState = newState
+                showPowerupStore = false
+            },
+            onDismiss = { showPowerupStore = false }
+        )
+    }
 }
 
 /**
@@ -192,7 +208,8 @@ fun GameScreenContent(
     selectedResource: ResourceType?,
     onAllocate: (Int, Map<ResourceType, Int>) -> Unit,
     onRunTurn: () -> Unit,
-    onSelectResource: (ResourceType) -> Unit
+    onSelectResource: (ResourceType) -> Unit,
+    onOpenPowerupStore: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         // Background — the salon room image
@@ -213,6 +230,7 @@ fun GameScreenContent(
             powerUpsUnlocked = gameState.powerUpsUnlocked,
             selectedResource = selectedResource,
             onSelectResource = onSelectResource,
+            onOpenPowerupStore = onOpenPowerupStore,
             modifier = Modifier.align(Alignment.TopStart)
         )
 
@@ -291,6 +309,7 @@ fun TopHudBar(
     powerUpsUnlocked: Boolean,
     selectedResource: ResourceType?,
     onSelectResource: (ResourceType) -> Unit,
+    onOpenPowerupStore: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -324,7 +343,7 @@ fun TopHudBar(
 
         // Center: Powerups button (stub)
         Button(
-            onClick = { /* TODO: Powerup buying dialog */ },
+            onClick = onOpenPowerupStore,
             enabled = powerUpsUnlocked,
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF7E57C2),
@@ -669,7 +688,8 @@ fun GameScreenPreview() {
             selectedResource = ResourceType.FOOD,
             onAllocate = { _, _ -> },
             onRunTurn = {},
-            onSelectResource = {}
+            onSelectResource = {},
+            onOpenPowerupStore = {}
         )
     }
 }
