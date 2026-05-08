@@ -1,11 +1,12 @@
 package com.example.angelorphanage.domain
 
-
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * The immutable state of the game
  */
-
+@Serializable
 data class GameState(
     val score: Int,
     val elapsedTurns: Int,
@@ -14,6 +15,7 @@ data class GameState(
     val level: Int,
     val powerups: Set<Powerup>,
     val powerUpsUnlocked: Boolean,
+    @Transient
     val baseParameters: GameParameters = BaseGameParameters(),
     val finished: Boolean,
 ) {

@@ -1,5 +1,7 @@
 package com.example.angelorphanage.ui.screen
 
+import com.example.angelorphanage.data.GameSummary
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,17 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-
-/**
- * Brief summary of a completed game, used for the score screen listing.
- */
-data class GameSummary(
-    val score: Int,
-    val elapsedTurns: Int,
-    val level: Int,
-    val petsAdopted: Int,
-    val rating: Int
-)
 
 /**
  * Screen that shows a list of brief statistics from previous games,

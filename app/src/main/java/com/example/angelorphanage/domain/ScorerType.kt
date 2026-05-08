@@ -2,10 +2,12 @@ package com.example.angelorphanage.domain
 
 import androidx.annotation.StringRes
 import com.example.angelorphanage.R
+import kotlinx.serialization.Serializable
 import kotlin.random.Random
 
 // Each score generator types on the game
 
+@Serializable
 enum class ScorerType(
     @StringRes name: Int,
     val meterLimits: Map<ResourceType, Pair<Int, Int>>,

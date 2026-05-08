@@ -43,11 +43,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.angelorphanage.R
+import com.example.angelorphanage.data.GameRepository
+import com.example.angelorphanage.data.GameSummary
 import com.example.angelorphanage.domain.GameState
+import com.example.angelorphanage.ui.theme.AngelOrphanageTheme
 import com.example.angelorphanage.domain.ResourceType
 import com.example.angelorphanage.domain.ScorerInstance
 import com.example.angelorphanage.domain.ScorerType
-import com.example.angelorphanage.ui.theme.AngelOrphanageTheme
 
 /**
  * Predefined arbitrary positions for pets in the salon room.
@@ -80,7 +82,10 @@ private val PET_POSITIONS = listOf(
  * 3. Each pet has a reset button to clear its allocation.
  */
 @Composable
-fun GameScreen(onGameFinished: (GameState) -> Unit) {
+fun GameScreen(
+    onGameFinished: (GameState) -> Unit,
+    repository: GameRepository
+) {
     var gameState by remember { mutableStateOf(GameState()) }
     var allocationMap by remember {
         mutableStateOf<List<Map<ResourceType, Int>>>(
@@ -88,6 +93,24 @@ fun GameScreen(onGameFinished: (GameState) -> Unit) {
         )
     }
     var selectedResource by remember { mutableStateOf<ResourceType?>(null) }
+    var hasLoaded by remember { mutableStateOf(false) }
+
+    // Load saved game on first composition
+    LaunchedEffect(Unit) {
+        val saved = repository.loadCurrentGame()
+        if (saved != null) {
+            gameState = saved
+            allocationMap = List(saved.scorers.size) { emptyMap() }
+        }
+        hasLoaded = true
+    }
+
+    // Save state after each turn
+    LaunchedEffect(gameState.elapsedTurns) {
+        if (hasLoaded && gameState.elapsedTurns > 0) {
+            repository.saveCurrentGame(gameState)
+        }
+    }
 
     // Ensure allocation map grows when new pets arrive
     if (allocationMap.size < gameState.scorers.size) {
@@ -98,6 +121,7 @@ fun GameScreen(onGameFinished: (GameState) -> Unit) {
     // Navigate to end screen when game is finished
     LaunchedEffect(gameState.finished) {
         if (gameState.finished) {
+            repository.clearCurrentGame()
             onGameFinished(gameState)
         }
     }

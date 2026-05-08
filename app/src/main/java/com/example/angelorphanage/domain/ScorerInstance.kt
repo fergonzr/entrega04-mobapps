@@ -1,5 +1,6 @@
 package com.example.angelorphanage.domain
 
+import kotlinx.serialization.Serializable
 import kotlin.math.max
 import kotlin.math.min
 
@@ -7,6 +8,7 @@ import kotlin.math.min
  * An immutable scorer holding data in the game.
  */
 
+@Serializable
 data class ScorerInstance(
     val name: String,
     val type: ScorerType,

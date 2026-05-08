@@ -1,27 +1,32 @@
 package com.example.angelorphanage.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import kotlinx.coroutines.launch
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.angelorphanage.data.GameRepository
+import com.example.angelorphanage.data.GameSummary
 import com.example.angelorphanage.domain.GameState
 import com.example.angelorphanage.domain.ScorerInstance
 import com.example.angelorphanage.ui.navigation.Routes
 import com.example.angelorphanage.ui.screen.EndScreen
 import com.example.angelorphanage.ui.screen.GameScreen
-import com.example.angelorphanage.ui.screen.GameSummary
 import com.example.angelorphanage.ui.screen.ScoreScreen
 import com.example.angelorphanage.ui.screen.SplashScreen
 import com.example.angelorphanage.ui.screen.TitleScreen
 
 /**
  * Result data for a completed game, shared between GameScreen and EndScreen.
+ * Not persisted — only lives in memory for the current session's EndScreen.
  */
 data class GameResult(
     val score: Int,
@@ -52,15 +57,26 @@ fun calculateRating(elapsedTurns: Int): Int = when {
  *
  * Splash → Title → Game → End → Title
  *                  └→ Score → Title
+ *
+ * @param repository Handles persistence of current game state and history.
  */
 @Composable
 fun AppNavigation(
+    repository: GameRepository,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController()
 ) {
     // Shared state persisted across screen transitions within a session
     var gameSummaries by remember { mutableStateOf<List<GameSummary>>(emptyList()) }
     var lastGameResult by remember { mutableStateOf<GameResult?>(null) }
+    var hasSavedGame by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    // Check for a saved game on first composition
+    LaunchedEffect(Unit) {
+        hasSavedGame = repository.loadCurrentGame() != null
+        gameSummaries = repository.getCompletedGames()
+    }
 
     NavHost(
         navController = navController,
@@ -79,6 +95,7 @@ fun AppNavigation(
 
         composable<Routes.Title> {
             TitleScreen(
+                hasSavedGame = hasSavedGame,
                 onNavigateToGame = { navController.navigate(Routes.Game) },
                 onNavigateToScore = { navController.navigate(Routes.Score) }
             )
@@ -86,6 +103,7 @@ fun AppNavigation(
 
         composable<Routes.Game> {
             GameScreen(
+                repository = repository,
                 onGameFinished = { gameState ->
                     val rating = calculateRating(gameState.elapsedTurns)
                     lastGameResult = GameResult(
@@ -96,13 +114,19 @@ fun AppNavigation(
                         pets = gameState.scorers
                     )
                     // Record this game in the summaries for the Score screen
-                    gameSummaries = gameSummaries + GameSummary(
+                    val summary = GameSummary(
                         score = gameState.score,
                         elapsedTurns = gameState.elapsedTurns,
                         level = gameState.level,
                         petsAdopted = gameState.scorers.count { it.givenAway },
                         rating = rating
                     )
+                    gameSummaries = gameSummaries + summary
+                    scope.launch {
+                        repository.saveCompletedGame(summary)
+                    }
+                    // No saved game to resume anymore
+                    hasSavedGame = false
                     navController.navigate(Routes.End) {
                         popUpTo(Routes.Game) { inclusive = true }
                     }

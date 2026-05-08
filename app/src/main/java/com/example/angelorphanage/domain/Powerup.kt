@@ -1,18 +1,9 @@
 package com.example.angelorphanage.domain
 
-class Powerup: GameParameterDiff {
-    val level: Int
-    val type: PowerupType
+import kotlinx.serialization.Serializable
 
-    constructor(level: Int, type: PowerupType){
-        this.level = level
-        this.type = type
-    }
-
-    constructor(type: PowerupType){
-        this.level = 1
-        this.type = type
-    }
+@Serializable
+class Powerup(val type: PowerupType, val level: Int = 1) : GameParameterDiff {
 
     override fun apply(parameters: GameParameters): GameParameters =
         this.type.apply(parameters, this.level)
@@ -38,6 +29,6 @@ class Powerup: GameParameterDiff {
         if (resultantLevel > this.type.maxLevel)
             throw IllegalArgumentException("Can't have a level $resultantLevel powerup of type ${this.type.name}.")
 
-        return  Powerup(resultantLevel, this.type)
+        return Powerup(this.type, resultantLevel)
     }
 }

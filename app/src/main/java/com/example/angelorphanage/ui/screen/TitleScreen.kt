@@ -22,6 +22,7 @@ import com.example.angelorphanage.R
 
 @Composable
 fun TitleScreen(
+    hasSavedGame: Boolean,
     onNavigateToGame: () -> Unit,
     onNavigateToScore: () -> Unit
 ) {
@@ -56,7 +57,7 @@ fun TitleScreen(
                 modifier = Modifier.width(240.dp)
             ) {
                 Text(
-                    text = "Iniciar Juego",
+                    text = if (hasSavedGame) "Continuar Juego" else "Iniciar Juego",
                     style = MaterialTheme.typography.titleMedium
                 )
             }

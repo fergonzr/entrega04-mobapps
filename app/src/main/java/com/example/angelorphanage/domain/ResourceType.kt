@@ -2,7 +2,9 @@ package com.example.angelorphanage.domain
 
 import androidx.annotation.StringRes
 import com.example.angelorphanage.R
+import kotlinx.serialization.Serializable
 
+@Serializable
 enum class ResourceType(
     @param:StringRes val nameRes: Int,
     val initialValue: Int
