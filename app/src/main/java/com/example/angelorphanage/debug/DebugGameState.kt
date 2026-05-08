@@ -8,6 +8,7 @@ import com.example.angelorphanage.domain.ResourceType
 import com.example.angelorphanage.domain.ScorerInstance
 import com.example.angelorphanage.domain.ScorerType
 import com.example.angelorphanage.domain.givenaway_pet_level_target
+import com.example.angelorphanage.domain.maxGameLevel
 import com.example.angelorphanage.domain.newpets_per_level
 
 /**
@@ -78,7 +79,7 @@ fun debugGameStateForLevel(level: Int): GameState {
     val score = elapsedTurns * 45 + level * 80
     val powerUpsUnlocked = level >= 2
     val powerups = if (level >= 3) setOf(Powerup(PowerupType.COMFORT)) else setOf()
-    val finished = level >= 6
+    val finished = level > maxGameLevel
 
     return GameState(
         score = score,

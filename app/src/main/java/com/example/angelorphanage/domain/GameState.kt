@@ -67,7 +67,7 @@ data class GameState(
 
         val leveledUp = newScorers.total_givenaway_pets() >= givenaway_pet_level_target(this.level)
         val newLevel = level + if (leveledUp) 1 else 0
-        val finished = newLevel >= maxGameLevel
+        val finished = newLevel > maxGameLevel
 
         // Process each scorer to create new instances with updated state
         val finalScorers = newScorers.mapIndexed { index, scorer ->
