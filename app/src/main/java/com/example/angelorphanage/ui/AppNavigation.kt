@@ -15,6 +15,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.angelorphanage.data.GameRepository
 import com.example.angelorphanage.data.GameSummary
+import com.example.angelorphanage.debug.ENABLE_DEBUG
+import com.example.angelorphanage.debug.RICH_DEBUG_STATE
+import com.example.angelorphanage.debug.debugGameStateForLevel
 import com.example.angelorphanage.domain.GameState
 import com.example.angelorphanage.domain.ScorerInstance
 import com.example.angelorphanage.ui.navigation.Routes
@@ -70,6 +73,7 @@ fun AppNavigation(
     var gameSummaries by remember { mutableStateOf<List<GameSummary>>(emptyList()) }
     var lastGameResult by remember { mutableStateOf<GameResult?>(null) }
     var hasSavedGame by remember { mutableStateOf(false) }
+    var debugInitialState by remember { mutableStateOf<GameState?>(null) }
     val scope = rememberCoroutineScope()
 
     // Check for a saved game on first composition
@@ -96,14 +100,22 @@ fun AppNavigation(
         composable<Routes.Title> {
             TitleScreen(
                 hasSavedGame = hasSavedGame,
-                onNavigateToGame = { navController.navigate(Routes.Game) },
-                onNavigateToScore = { navController.navigate(Routes.Score) }
+                onNavigateToGame = {
+                    debugInitialState = null // Normal game start
+                    navController.navigate(Routes.Game)
+                },
+                onNavigateToScore = { navController.navigate(Routes.Score) },
+                onStartDebugGame = { level ->
+                    debugInitialState = debugGameStateForLevel(level)
+                    navController.navigate(Routes.Game)
+                }
             )
         }
 
         composable<Routes.Game> {
             GameScreen(
                 repository = repository,
+                debugInitialState = debugInitialState,
                 onGameFinished = { gameState ->
                     val rating = calculateRating(gameState.elapsedTurns)
                     lastGameResult = GameResult(

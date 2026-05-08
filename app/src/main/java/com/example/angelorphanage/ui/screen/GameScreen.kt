@@ -45,6 +45,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.angelorphanage.R
 import com.example.angelorphanage.data.GameRepository
 import com.example.angelorphanage.data.GameSummary
+import com.example.angelorphanage.debug.RICH_DEBUG_STATE
 import com.example.angelorphanage.domain.GameState
 import com.example.angelorphanage.ui.theme.AngelOrphanageTheme
 import com.example.angelorphanage.domain.ResourceType
@@ -84,25 +85,28 @@ private val PET_POSITIONS = listOf(
 @Composable
 fun GameScreen(
     onGameFinished: (GameState) -> Unit,
-    repository: GameRepository
+    repository: GameRepository,
+    debugInitialState: GameState? = null
 ) {
-    var gameState by remember { mutableStateOf(GameState()) }
+    var gameState by remember { mutableStateOf(debugInitialState ?: GameState()) }
     var allocationMap by remember {
         mutableStateOf<List<Map<ResourceType, Int>>>(
             List(gameState.scorers.size) { emptyMap() }
         )
     }
     var selectedResource by remember { mutableStateOf<ResourceType?>(null) }
-    var hasLoaded by remember { mutableStateOf(false) }
+    var hasLoaded by remember { mutableStateOf(debugInitialState != null) }
 
-    // Load saved game on first composition
+    // Load saved game on first composition (skip if debug state was provided)
     LaunchedEffect(Unit) {
-        val saved = repository.loadCurrentGame()
-        if (saved != null) {
-            gameState = saved
-            allocationMap = List(saved.scorers.size) { emptyMap() }
+        if (debugInitialState == null) {
+            val saved = repository.loadCurrentGame()
+            if (saved != null) {
+                gameState = saved
+                allocationMap = List(saved.scorers.size) { emptyMap() }
+            }
+            hasLoaded = true
         }
-        hasLoaded = true
     }
 
     // Save state after each turn
@@ -608,57 +612,6 @@ fun VerticalMeterBar(
 
 // ─── Preview ──────────────────────────────────────────────────────────
 
-/**
- * Constructs a sample GameState for preview purposes with a mix of
- * happy and sad pets at various meter levels.
- */
-private fun sampleGameState(): GameState = GameState(
-    score = 420,
-    elapsedTurns = 7,
-    level = 2,
-    powerups = setOf(),
-    powerUpsUnlocked = true,
-    finished = false,
-    scorers = listOf(
-        ScorerInstance(
-            name = "Firulais",
-            type = ScorerType.DOG,
-            givenAway = false,
-            meters = mapOf(ResourceType.FOOD to 2, ResourceType.WATER to 1),
-            lastGeneratedScore = 7
-        ),
-        ScorerInstance(
-            name = "Michi",
-            type = ScorerType.CAT,
-            givenAway = false,
-            meters = mapOf(ResourceType.FOOD to 1, ResourceType.WATER to 1),
-            lastGeneratedScore = 5
-        ),
-        ScorerInstance(
-            name = "Rex",
-            type = ScorerType.DOG,
-            givenAway = false,
-            meters = mapOf(ResourceType.FOOD to -1, ResourceType.WATER to 0),
-            lastGeneratedScore = -1
-        ),
-        ScorerInstance(
-            name = "Pelusa",
-            type = ScorerType.CAT,
-            givenAway = true,
-            meters = mapOf(ResourceType.FOOD to 1, ResourceType.WATER to 2),
-            lastGeneratedScore = 4
-        ),
-        ScorerInstance(
-            name = "Luna",
-            type = ScorerType.DOG,
-            givenAway = false,
-            meters = mapOf(ResourceType.FOOD to 0, ResourceType.WATER to -1),
-            lastGeneratedScore = -2
-        ),
-    ),
-    currentResources = mapOf(ResourceType.FOOD to 3, ResourceType.WATER to 4)
-)
-
 @Preview(
     name = "Game Screen Landscape",
     showBackground = true,
@@ -667,7 +620,7 @@ private fun sampleGameState(): GameState = GameState(
 )
 @Composable
 fun GameScreenPreview() {
-    val state = sampleGameState()
+    val state = RICH_DEBUG_STATE
 
     // Some pets have allocations to show the light blue preview effect
     val allocationMap = listOf(
@@ -676,6 +629,7 @@ fun GameScreenPreview() {
         mapOf(ResourceType.WATER to 1),                           // Rex: +1 water
         emptyMap<ResourceType, Int>(),                            // Pelusa: given away
         mapOf(ResourceType.FOOD to 2, ResourceType.WATER to 1),  // Luna: +2 food, +1 water
+        emptyMap<ResourceType, Int>(),                            // Bigotes: nothing
     )
 
     val totalAllocated = allocationMap.fold(emptyMap<ResourceType, Int>()) { acc, map ->
