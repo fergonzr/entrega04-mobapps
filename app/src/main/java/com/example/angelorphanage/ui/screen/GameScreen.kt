@@ -107,13 +107,16 @@ fun GameScreen(
             .build()
         SoundPool.Builder()
             .setAudioAttributes(attributes)
-            .setMaxStreams(4)
+            .setMaxStreams(8)
             .build()
     }
     val barkSoundId = remember(soundPool, context) { soundPool.load(context, R.raw.bark, 1) }
     val meowSoundId = remember(soundPool, context) { soundPool.load(context, R.raw.meow, 1) }
     val levelUpSoundId = remember(soundPool, context) { soundPool.load(context, R.raw.levelup, 1) }
     val putFoodWaterSoundId = remember(soundPool, context) { soundPool.load(context, R.raw.putfoodwater, 1) }
+    val newDaySoundId = remember(soundPool, context) { soundPool.load(context, R.raw.newday, 1) }
+    val coinSoundId = remember(soundPool, context) { soundPool.load(context, R.raw.coin, 1) }
+    val failSoundId = remember(soundPool, context) { soundPool.load(context, R.raw.fail, 1) }
 
     val themePlayer = remember(context) { MediaPlayer.create(context, R.raw.theme) }
 
@@ -245,14 +248,21 @@ fun GameScreen(
             allocationMap = newAllocationMap
         },
         onRunTurn = {
+            playSfx(newDaySoundId)
             val paddedAllocation = allocationMap +
                     List(
                         maxOf(0, gameState.scorers.size - allocationMap.size)
                     ) { emptyMap<ResourceType, Int>() }
             val previousLevel = gameState.level
+            val previousScore = gameState.score
             val newState = gameState.run(paddedAllocation)
             if (newState.level > previousLevel) {
                 playSfx(levelUpSoundId)
+            }
+            if (newState.score > previousScore) {
+                playSfx(coinSoundId)
+            } else if (newState.score < previousScore) {
+                playSfx(failSoundId)
             }
             gameState = newState
             allocationMap = List(gameState.scorers.size) { emptyMap() }
