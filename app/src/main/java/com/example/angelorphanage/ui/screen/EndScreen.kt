@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -28,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.angelorphanage.R
+import com.example.angelorphanage.data.GameRepository
 import com.example.angelorphanage.domain.ScorerInstance
 
 /**
@@ -48,8 +50,13 @@ fun EndScreen(
     elapsedTurns: Int,
     level: Int,
     pets: List<ScorerInstance>,
-    onNavigateToTitle: () -> Unit
+    onNavigateToTitle: () -> Unit,
+    gameRepository: GameRepository
 ) {
+    LaunchedEffect(Unit) {
+        gameRepository.clearCurrentGame()
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background

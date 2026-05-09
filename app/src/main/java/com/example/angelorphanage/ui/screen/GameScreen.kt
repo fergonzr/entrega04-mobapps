@@ -74,8 +74,8 @@ private const val PET_AMBIENT_SOUND_INTERVAL_MS = 9_000L
  * away, its position is freed for the next incoming pet.
  */
 private val PET_POSITIONS = listOf(
-    0.10f to 0.08f,
-    0.40f to 0.02f,
+    0.30f to 0.30f,
+    0.50f to 0.22f,
     0.70f to 0.06f,
     0.14f to 0.55f,
     0.44f to 0.50f,
@@ -214,7 +214,6 @@ fun GameScreen(
     // Navigate to end screen when game is finished
     LaunchedEffect(gameState.finished) {
         if (gameState.finished) {
-            repository.clearCurrentGame()
             onGameFinished(gameState)
         }
     }
@@ -443,7 +442,7 @@ fun TopHudBar(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            InfoBadge(icon = "⭐", label = "Nivel", value = level.toString())
+            InfoBadge(icon = "Lvl", label = "Nivel", value = level.toString())
             InfoBadge(icon = "📅", label = "Día", value = elapsedTurns.toString())
             InfoBadge(icon = "🪙", label = "Monedas", value = score.toString())
         }
@@ -517,7 +516,7 @@ fun InfoBadge(icon: String, label: String, value: String) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        Text(text = icon, fontSize = 14.sp)
+        Text(text = icon, fontSize = 14.sp, color = Color.White)
         Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = value,
@@ -589,7 +588,7 @@ fun PetDisplay(
                     Text(
                         text = "C",
                         color = Color.Black,
-                        fontSize = 7.sp,
+                        fontSize = 8.sp,
                         fontWeight = FontWeight.Bold
                     )
                     VerticalMeterBar(
@@ -608,7 +607,7 @@ fun PetDisplay(
                     Text(
                         text = "A",
                         color = Color.Black,
-                        fontSize = 7.sp,
+                        fontSize = 8.sp,
                         fontWeight = FontWeight.Bold
                     )
                     VerticalMeterBar(
@@ -623,8 +622,6 @@ fun PetDisplay(
                 }
             }
 
-            Spacer(modifier = Modifier.width(4.dp))
-
             // Pet name, image, and reset button
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -637,7 +634,7 @@ fun PetDisplay(
                     Text(
                         text = scorer.name,
                         color = Color.Black,
-                        fontSize = 9.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                         maxLines = 1,
@@ -669,7 +666,7 @@ fun PetDisplay(
                 Image(
                     painter = painterResource(id = petImageRes),
                     contentDescription = scorer.name,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(100.dp)
                 )
 
             }

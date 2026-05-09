@@ -18,13 +18,13 @@ enum class ScorerType(
             ResourceType.FOOD to Pair(-2,3),
             ResourceType.WATER to Pair(-2,2),
         ),
-        giveawayReward = 300,
+        giveawayReward = 250,
     ) {
         override fun tickdown_meters(
             parameters: GameParameters,
             meters: Map<ResourceType, Int>
         ): Map<ResourceType, Int> = mapOf(
-            ResourceType.FOOD to 1,
+            ResourceType.FOOD to 2,
             ResourceType.WATER to 1,
         )
 
@@ -46,8 +46,8 @@ enum class ScorerType(
         ): Boolean {
             val metersFull = meters.all { it.value == this.meterLimits[it.key]!!.second }
             if (!metersFull) return false
-            // 20% base chance, each visibility level adds ~26.7%, reaching 100% at max level (3)
-            val chance = (20 + parameters.getVisibility() * 27).coerceAtMost(100)
+            // 10% base chance, each visibility level adds 30%, reaching 100% at max level (3)
+            val chance = (10 + parameters.getVisibility() * 30).coerceAtMost(100)
             return Random.nextInt(100) < chance
         }
 
@@ -58,7 +58,7 @@ enum class ScorerType(
             ResourceType.FOOD to Pair(-1,1),
             ResourceType.WATER to Pair(-1,2),
         ),
-        giveawayReward = 200
+        giveawayReward = 150
     ){
         override fun tickdown_meters(
             parameters: GameParameters,
@@ -86,8 +86,8 @@ enum class ScorerType(
         ): Boolean {
             val metersFull = meters.all { it.value == this.meterLimits[it.key]!!.second }
             if (!metersFull) return false
-            // 30% base chance, each visibility level adds ~23.3%, reaching 100% at max level (3)
-            val chance = (30 + parameters.getVisibility() * 24).coerceAtMost(100)
+            // 20% base chance, each visibility level adds 27%, reaching ~100% at max level (3)
+            val chance = (20 + parameters.getVisibility() * 27).coerceAtMost(100)
             return Random.nextInt(100) < chance
         }
 
