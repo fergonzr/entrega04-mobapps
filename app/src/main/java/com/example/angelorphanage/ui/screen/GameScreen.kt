@@ -1,5 +1,8 @@
 package com.example.angelorphanage.ui.screen
 
+import android.media.AudioAttributes
+import android.media.MediaPlayer
+import android.media.SoundPool
 import com.example.angelorphanage.ui.screen.PowerupStoreDialog
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,6 +29,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +41,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -52,12 +57,15 @@ import com.example.angelorphanage.ui.theme.AngelOrphanageTheme
 import com.example.angelorphanage.domain.ResourceType
 import com.example.angelorphanage.domain.ScorerInstance
 import com.example.angelorphanage.domain.ScorerType
+import kotlinx.coroutines.delay
+import kotlin.random.Random
 
 /**
  * Maximum number of active (non-givenaway) pets that can be displayed at once.
  * The game logic ensures there are never more than this many active pets.
  */
 private const val MAX_ACTIVE_PETS = 6
+private const val PET_AMBIENT_SOUND_INTERVAL_MS = 9_000L
 
 /**
  * Fixed display positions for pets in the salon room.
@@ -90,6 +98,35 @@ fun GameScreen(
     repository: GameRepository,
     debugInitialState: GameState? = null
 ) {
+    val context = LocalContext.current
+
+    val soundPool = remember {
+        val attributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_GAME)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+        SoundPool.Builder()
+            .setAudioAttributes(attributes)
+            .setMaxStreams(4)
+            .build()
+    }
+    val barkSoundId = remember(soundPool, context) { soundPool.load(context, R.raw.bark, 1) }
+    val meowSoundId = remember(soundPool, context) { soundPool.load(context, R.raw.meow, 1) }
+    val levelUpSoundId = remember(soundPool, context) { soundPool.load(context, R.raw.levelup, 1) }
+    val putFoodWaterSoundId = remember(soundPool, context) { soundPool.load(context, R.raw.putfoodwater, 1) }
+
+    val themePlayer = remember(context) { MediaPlayer.create(context, R.raw.theme) }
+
+    fun playSfx(soundId: Int) {
+        soundPool.play(soundId, 1f, 1f, 1, 0, 1f)
+    }
+
+    fun playBarkSfx() {
+        // Layer a softer second bark to make it stand out a bit more.
+        soundPool.play(barkSoundId, 1f, 1f, 1, 0, 1f)
+        soundPool.play(barkSoundId, 0.65f, 0.65f, 0, 0, 1f)
+    }
+
     var gameState by remember { mutableStateOf(debugInitialState ?: GameState()) }
     var allocationMap by remember {
         mutableStateOf<List<Map<ResourceType, Int>>>(
@@ -122,6 +159,39 @@ fun GameScreen(
     LaunchedEffect(gameState.elapsedTurns) {
         if (hasLoaded && gameState.elapsedTurns > 0) {
             repository.saveCurrentGame(gameState)
+        }
+    }
+
+    // Start and stop background music + release audio resources when leaving this screen
+    DisposableEffect(themePlayer, soundPool) {
+        themePlayer?.isLooping = true
+        themePlayer?.start()
+
+        onDispose {
+            themePlayer?.apply {
+                runCatching {
+                    if (isPlaying) stop()
+                }
+                release()
+            }
+            soundPool.release()
+        }
+    }
+
+    // Play ambient meow/bark from active pets every few seconds
+    LaunchedEffect(gameState.scorers) {
+        while (true) {
+            delay(PET_AMBIENT_SOUND_INTERVAL_MS)
+            val activePetTypes = gameState.scorers
+                .filter { !it.givenAway }
+                .map { it.type }
+
+            if (activePetTypes.isEmpty()) continue
+
+            when (activePetTypes[Random.nextInt(activePetTypes.size)]) {
+                ScorerType.DOG -> playBarkSfx()
+                ScorerType.CAT -> playSfx(meowSoundId)
+            }
         }
     }
 
@@ -165,6 +235,12 @@ fun GameScreen(
         onAllocate = { index, newAllocation ->
             val newAllocationMap = allocationMap.toMutableList()
             if (index < newAllocationMap.size) {
+                val previousAllocation = newAllocationMap[index]
+                val oldTotal = previousAllocation.values.sum()
+                val newTotal = newAllocation.values.sum()
+                if (newTotal > oldTotal) {
+                    playSfx(putFoodWaterSoundId)
+                }
                 newAllocationMap[index] = newAllocation
             }
             allocationMap = newAllocationMap
@@ -174,7 +250,12 @@ fun GameScreen(
                     List(
                         maxOf(0, gameState.scorers.size - allocationMap.size)
                     ) { emptyMap<ResourceType, Int>() }
-            gameState = gameState.run(paddedAllocation)
+            val previousLevel = gameState.level
+            val newState = gameState.run(paddedAllocation)
+            if (newState.level > previousLevel) {
+                playSfx(levelUpSoundId)
+            }
+            gameState = newState
             allocationMap = List(gameState.scorers.size) { emptyMap() }
         },
         onSelectResource = { resourceType ->

@@ -1,19 +1,19 @@
 package com.example.angelorphanage.ui.screen
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.example.angelorphanage.R
 import kotlinx.coroutines.delay
 
 @Composable
@@ -25,26 +25,17 @@ fun SplashScreen(
         onNavigateToTitle()
     }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.primaryContainer
-    ) {
+    Surface(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Placeholder for logo asset
-            Text(
-                text = "🐾",
-                fontSize = 72.sp,
-                modifier = Modifier.size(120.dp)
-            )
-            Text(
-                text = "Angel Orphanage",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+            Image(
+                painter = painterResource(id = R.drawable.splash),
+                contentDescription = "Splash",
+                modifier = Modifier.size(220.dp),
+                contentScale = ContentScale.Fit
             )
         }
     }
