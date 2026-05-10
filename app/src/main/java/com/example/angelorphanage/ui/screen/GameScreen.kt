@@ -402,9 +402,8 @@ fun TopHudBar(
     onOpenPowerupStore: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val hudBg = Color(0xB334251D)
-    val hudCard = Color(0xA64A3527)
-    val hudBorder = Color(0x66FFE0B2)
+    val hudBg = Color(0xFF34251D)
+    val hudBorder = Color(0xFF34251D)
 
     Row(
         modifier = modifier
@@ -412,17 +411,15 @@ fun TopHudBar(
             .padding(horizontal = 8.dp, vertical = 1.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(hudBg)
-            .border(1.dp, hudBorder, RoundedCornerShape(16.dp))
-            .padding(horizontal = 5.dp, vertical = 1.dp),
+            .border(1.5.dp, hudBorder, RoundedCornerShape(16.dp))
+            .padding(horizontal = 6.dp, vertical = 3.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
             modifier = Modifier
                 .weight(1.9f)
-                .clip(RoundedCornerShape(12.dp))
-                .background(hudCard)
-                .padding(horizontal = 5.dp, vertical = 1.dp),
+                .padding(horizontal = 2.dp, vertical = 0.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -448,14 +445,14 @@ fun TopHudBar(
             onClick = onOpenPowerupStore,
             enabled = powerUpsUnlocked,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF7A4F33),
-                contentColor = Color(0xFFFFF3E0),
-                disabledContainerColor = Color(0xFF4A3A31),
-                disabledContentColor = Color(0xFFBCAAA4)
+                containerColor = Color(0xFFFFD54F),
+                contentColor = Color(0xFF4E342E),
+                disabledContainerColor = Color(0xFFFFD54F),
+                disabledContentColor = Color(0xFF5D4037)
             ),
             modifier = Modifier
                 .weight(1.15f)
-                .height(32.dp),
+                .height(30.dp),
             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -470,14 +467,12 @@ fun TopHudBar(
         Row(
             modifier = Modifier
                 .weight(1.2f)
-                .clip(RoundedCornerShape(12.dp))
-                .background(hudCard)
-                .padding(horizontal = 5.dp, vertical = 1.dp),
+                .padding(horizontal = 2.dp, vertical = 0.dp),
             horizontalArrangement = Arrangement.spacedBy(5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             InfoBadge(
-                icon = "Nv",
+                icon = "Lvl",
                 value = level.toString(),
                 modifier = Modifier.weight(1f)
             )
@@ -518,11 +513,11 @@ fun ResourceIndicator(
         Modifier
             .clip(RoundedCornerShape(10.dp))
             .border(1.5.dp, Color(0xFFFFD54F), RoundedCornerShape(10.dp))
-            .background(Color(0x884F3424))
+            .background(Color(0xFF7A4F33))
     } else {
         Modifier
             .clip(RoundedCornerShape(10.dp))
-            .background(Color(0x55301F16))
+            .background(Color(0xFF7A4F33))
     }
 
     Row(
@@ -530,6 +525,7 @@ fun ResourceIndicator(
         modifier = modifier
             .then(highlightModifier)
             .clickable(onClick = onClick)
+            .height(30.dp)
             .padding(horizontal = 5.dp, vertical = 0.dp)
     ) {
         Image(
@@ -571,7 +567,8 @@ fun InfoBadge(
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
-            .background(Color(0x55301F16))
+            .background(Color(0xFF7A4F33))
+            .height(30.dp)
             .padding(horizontal = 4.dp, vertical = 1.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(2.dp)
