@@ -371,8 +371,8 @@ fun GameScreenContent(
         Button(
             onClick = onRunTurn,
             modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(start = 16.dp, bottom = 12.dp),
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF4CAF50),
                 contentColor = Color.White
