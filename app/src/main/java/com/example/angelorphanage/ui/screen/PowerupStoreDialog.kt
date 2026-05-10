@@ -1,12 +1,15 @@
 package com.example.angelorphanage.ui.screen
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,9 +31,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -80,6 +85,7 @@ fun PowerupStoreDialog(
     onConfirm: (GameState) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     var pendingPurchases by remember { mutableStateOf<Map<PowerupType, Int>>(emptyMap()) }
 
     val currentLevels = PowerupType.entries.associateWith { type ->
@@ -95,6 +101,11 @@ fun PowerupStoreDialog(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color(0x66000000))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { }
             .padding(top = 52.dp, start = 8.dp, end = 8.dp, bottom = 8.dp),
         contentAlignment = Alignment.TopCenter
     ) {
@@ -137,8 +148,9 @@ fun PowerupStoreDialog(
                     val currentLevel = currentLevels[type] ?: 0
                     val pendingLevels = pendingPurchases[type] ?: 0
                     val newLevel = currentLevel + pendingLevels
-                    val canBuyMore = newLevel < type.maxLevel &&
-                        (totalPendingCost + type.costPerlevel) <= availablePoints
+                    val reachedMaxLevel = newLevel >= type.maxLevel
+                    val hasEnoughCoins = (totalPendingCost + type.costPerlevel) <= availablePoints
+                    val canBuyMore = !reachedMaxLevel && hasEnoughCoins
                     val isSelected = pendingLevels > 0
 
                     PowerupCard(
@@ -154,6 +166,18 @@ fun PowerupStoreDialog(
                                 pendingPurchases = pendingPurchases.toMutableMap().apply {
                                     this[type] = (this[type] ?: 0) + 1
                                 }
+                            } else if (reachedMaxLevel) {
+                                Toast.makeText(
+                                    context,
+                                    "Este powerup ya está al máximo",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "No tienes suficientes monedas",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         },
                         modifier = Modifier.weight(1f)
@@ -274,29 +298,25 @@ private fun PowerupCard(
             .clip(RoundedCornerShape(8.dp))
             .background(cardBackground)
             .border(1.dp, borderColor, RoundedCornerShape(8.dp))
-            .clickable(enabled = canBuyMore, onClick = onTap)
-            .height(92.dp)
+            .clickable(onClick = onTap)
+            .height(112.dp)
             .padding(horizontal = 4.dp, vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = POWERUP_ICONS[type] ?: "\u2728",
-                fontSize = 16.sp
-            )
-            Text(
-                text = stringResource(type.labelRes()),
-                color = TitleText,
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                maxLines = 2
-            )
-        }
+        Text(
+            text = POWERUP_ICONS[type] ?: "\u2728",
+            fontSize = 14.sp
+        )
+        Text(
+            text = stringResource(type.labelRes()),
+            color = TitleText,
+            fontSize = 8.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(3.dp),
@@ -323,16 +343,20 @@ private fun PowerupCard(
             )
         }
 
+        Spacer(modifier = Modifier.weight(1f))
+
         Text(
             text = stringResource(type.descriptionRes()),
             color = MutedText,
-            fontSize = 7.sp,
-            maxLines = 1
+            fontSize = 8.sp,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
         )
         Text(
             text = "$costPerLevel \uD83E\uDE99/nivel",
             color = MutedText,
-            fontSize = 7.sp,
+            fontSize = 8.sp,
             fontWeight = FontWeight.SemiBold
         )
     }

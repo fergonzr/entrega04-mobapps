@@ -116,6 +116,7 @@ fun GameScreen(
     val newDaySoundId = remember(soundPool, context) { soundPool.load(context, R.raw.newday, 1) }
     val coinSoundId = remember(soundPool, context) { soundPool.load(context, R.raw.coin, 1) }
     val failSoundId = remember(soundPool, context) { soundPool.load(context, R.raw.fail, 1) }
+    val buyPowerupSoundId = remember(soundPool, context) { soundPool.load(context, R.raw.buypowerup, 1) }
 
     val themePlayer = remember(context) { MediaPlayer.create(context, R.raw.theme) }
 
@@ -277,6 +278,7 @@ fun GameScreen(
         PowerupStoreDialog(
             gameState = gameState,
             onConfirm = { newState ->
+                playSfx(buyPowerupSoundId)
                 gameState = newState
                 showPowerupStore = false
             },

@@ -5,11 +5,11 @@
     <string name="dog_label">Perro</string>
     <string name="cat_label">Gato</string>
     <string name="comfort_label">Mimos</string>
-    <string name="comfort_desc">Tus mascotas generan más puntos cuando sus necesidades están cubiertas.</string>
-    <string name="adoption_marketing_label">Marketing de adopción</string>
-    <string name="adoption_marketing_desc">Aumenta la probabilidad de que tus mascotas sean adoptadas cuando están felices.</string>
+    <string name="comfort_desc">Aumenta la felicidad de tus mascotas.</string>
+    <string name="adoption_marketing_label">Marketing de adopcion</string>
+    <string name="adoption_marketing_desc">Aumenta la probabilidad de adopcion.</string>
     <string name="food_increment_label">Incremento de comida</string>
-    <string name="food_increment_desc">Genera más comida por turno para alimentar a tus mascotas.</string>
+    <string name="food_increment_desc">Aumenta los recursos de comida para tus mascotas.</string>
     <string name="water_increment_label">Incremento de agua</string>
-    <string name="water_increment_desc">Genera más agua por turno para hidratar a tus mascotas.</string>
+    <string name="water_increment_desc">Aumenta los recursos de agua para tus mascotas.</string>
 </resources>
