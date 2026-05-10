@@ -47,7 +47,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.angelorphanage.R
+import com.juego.petangels.R
 import com.example.angelorphanage.data.GameRepository
 import com.example.angelorphanage.data.GameSummary
 import com.example.angelorphanage.debug.RICH_DEBUG_STATE

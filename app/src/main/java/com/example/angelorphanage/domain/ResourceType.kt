@@ -1,7 +1,7 @@
 package com.example.angelorphanage.domain
 
 import androidx.annotation.StringRes
-import com.example.angelorphanage.R
+import com.juego.petangels.R
 import kotlinx.serialization.Serializable
 
 @Serializable
