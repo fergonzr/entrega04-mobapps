@@ -12,7 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AngelOrphanage">
         <activity
-            android:name=".MainActivity"
+            android:name="com.example.angelorphanage.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:screenOrientation="sensorLandscape"

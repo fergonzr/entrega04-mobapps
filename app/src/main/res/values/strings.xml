@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">AngelOrphanage</string>
+    <string name="app_name">PetAngels</string>
     <string name="food_label">Comida</string>
     <string name="water_label">Agua</string>
     <string name="dog_label">Perro</string>

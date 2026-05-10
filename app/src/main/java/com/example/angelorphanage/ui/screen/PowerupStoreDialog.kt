@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.DialogProperties
-import com.juego.petangels.R
+import com.example.angelorphanage.R
 import com.example.angelorphanage.debug.RICH_DEBUG_STATE
 import com.example.angelorphanage.domain.GameState
 import com.example.angelorphanage.domain.Powerup
