@@ -73,12 +73,12 @@ private const val PET_AMBIENT_SOUND_INTERVAL_MS = 9_000L
  * away, its position is freed for the next incoming pet.
  */
 private val PET_POSITIONS = listOf(
-    0.30f to 0.30f,
-    0.50f to 0.22f,
-    0.70f to 0.06f,
-    0.14f to 0.55f,
-    0.44f to 0.50f,
-    0.74f to 0.56f,
+    0.12f to 0.30f,
+    0.34f to 0.16f,
+    0.66f to 0.14f,
+    0.18f to 0.56f,
+    0.45f to 0.50f,
+    0.72f to 0.54f,
 )
 
 /**
@@ -136,6 +136,7 @@ fun GameScreen(
             List(gameState.scorers.size) { emptyMap() }
         )
     }
+    var allocationHistory by remember { mutableStateOf<List<Pair<Int, ResourceType>>>(emptyList()) }
     var selectedResource by remember { mutableStateOf<ResourceType?>(null) }
     var hasLoaded by remember { mutableStateOf(debugInitialState != null) }
 
@@ -153,6 +154,7 @@ fun GameScreen(
             if (saved != null) {
                 gameState = saved
                 allocationMap = List(saved.scorers.size) { emptyMap() }
+                allocationHistory = emptyList()
             }
             hasLoaded = true
         }
@@ -242,11 +244,42 @@ fun GameScreen(
                 val newTotal = newAllocation.values.sum()
                 if (newTotal > oldTotal) {
                     playSfx(putFoodWaterSoundId)
+                    ResourceType.entries
+                        .filter { resType ->
+                            (newAllocation[resType] ?: 0) > (previousAllocation[resType] ?: 0)
+                        }
+                        .forEach { increasedType ->
+                            val delta =
+                                (newAllocation[increasedType] ?: 0) - (previousAllocation[increasedType] ?: 0)
+                            repeat(delta) {
+                                allocationHistory = allocationHistory + (index to increasedType)
+                            }
+                        }
                 }
                 newAllocationMap[index] = newAllocation
             }
             allocationMap = newAllocationMap
         },
+        onUndoLastAllocation = {
+            if (allocationHistory.isEmpty()) return@GameScreenContent
+
+            val (scorerIndex, resourceType) = allocationHistory.last()
+            allocationHistory = allocationHistory.dropLast(1)
+
+            if (scorerIndex >= allocationMap.size) return@GameScreenContent
+
+            val newAllocationMap = allocationMap.toMutableList()
+            val currentAllocation = newAllocationMap[scorerIndex]
+            val currentAmount = currentAllocation[resourceType] ?: 0
+            if (currentAmount <= 0) return@GameScreenContent
+
+            newAllocationMap[scorerIndex] =
+                if (currentAmount == 1) currentAllocation - resourceType
+                else currentAllocation + (resourceType to (currentAmount - 1))
+
+            allocationMap = newAllocationMap
+        },
+        canUndoAllocation = allocationHistory.isNotEmpty(),
         onRunTurn = {
             playSfx(newDaySoundId)
             val paddedAllocation = allocationMap +
@@ -266,6 +299,7 @@ fun GameScreen(
             }
             gameState = newState
             allocationMap = List(gameState.scorers.size) { emptyMap() }
+            allocationHistory = emptyList()
         },
         onSelectResource = { resourceType ->
             selectedResource = if (selectedResource == resourceType) null else resourceType
@@ -299,6 +333,8 @@ fun GameScreenContent(
     petPositionMap: Map<String, Int>,
     selectedResource: ResourceType?,
     onAllocate: (Int, Map<ResourceType, Int>) -> Unit,
+    onUndoLastAllocation: () -> Unit,
+    canUndoAllocation: Boolean,
     onRunTurn: () -> Unit,
     onSelectResource: (ResourceType) -> Unit,
     onOpenPowerupStore: () -> Unit
@@ -369,23 +405,46 @@ fun GameScreenContent(
             }
         }
 
-        // Bottom-left: Run turn button
-        Button(
-            onClick = onRunTurn,
+        // Bottom-right action buttons
+        Row(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(end = 16.dp, bottom = 12.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF4CAF50),
-                contentColor = Color.White
-            )
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Avanzar Día",
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
+            Button(
+                onClick = onUndoLastAllocation,
+                enabled = canUndoAllocation,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFE53935),
+                    contentColor = Color.White,
+                    disabledContainerColor = Color(0xFFEF9A9A),
+                    disabledContentColor = Color(0xFFB71C1C)
+                )
+            ) {
+                Text(
+                    text = "Deshacer",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+            }
+
+            Button(
+                onClick = onRunTurn,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF4CAF50),
+                    contentColor = Color.White
+                )
+            ) {
+                Text(
+                    text = "Avanzar Día",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            }
         }
+
     }
 }
 
@@ -787,10 +846,13 @@ fun GameScreenPreview() {
             petPositionMap = petPositionMap,
             selectedResource = ResourceType.FOOD,
             onAllocate = { _, _ -> },
+            onUndoLastAllocation = {},
+            canUndoAllocation = true,
             onRunTurn = {},
             onSelectResource = {},
             onOpenPowerupStore = {}
         )
     }
 }
+
 
