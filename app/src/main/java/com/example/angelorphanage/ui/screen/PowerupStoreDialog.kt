@@ -4,13 +4,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -26,11 +30,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.example.angelorphanage.R
 import com.example.angelorphanage.debug.RICH_DEBUG_STATE
 import com.example.angelorphanage.domain.GameState
@@ -89,9 +92,11 @@ fun PowerupStoreDialog(
 
     val availablePoints = gameState.score
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 52.dp, start = 8.dp, end = 8.dp, bottom = 8.dp),
+        contentAlignment = Alignment.TopCenter
     ) {
         Column(
             modifier = Modifier
@@ -99,13 +104,14 @@ fun PowerupStoreDialog(
                 .clip(RoundedCornerShape(12.dp))
                 .background(DialogBackground)
                 .border(1.dp, DialogBorder, RoundedCornerShape(12.dp))
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(8.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
                 text = "Tienda de Power Ups",
                 color = TitleText,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
             )
 
@@ -113,12 +119,12 @@ fun PowerupStoreDialog(
                 Text(
                     text = "Puntos Disponibles: ",
                     color = MutedText,
-                    fontSize = 12.sp
+                    fontSize = 10.sp
                 )
                 Text(
                     text = "$availablePoints",
                     color = PointsGold,
-                    fontSize = 13.sp,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -126,7 +132,7 @@ fun PowerupStoreDialog(
             HorizontalDivider(color = DialogBorder)
 
             val powerupTypes = PowerupType.entries.sortedBy { it.order }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 powerupTypes.forEach { type ->
                     val currentLevel = currentLevels[type] ?: 0
                     val pendingLevels = pendingPurchases[type] ?: 0
@@ -163,12 +169,12 @@ fun PowerupStoreDialog(
                     Text(
                         text = "Costo total:",
                         color = MutedText,
-                        fontSize = 12.sp
+                        fontSize = 10.sp
                     )
                     Text(
                         text = "$totalPendingCost puntos",
                         color = PointsGold,
-                        fontSize = 12.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -176,7 +182,7 @@ fun PowerupStoreDialog(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Button(
                     onClick = { pendingPurchases = emptyMap() },
@@ -187,9 +193,15 @@ fun PowerupStoreDialog(
                         disabledContainerColor = DisabledGray,
                         disabledContentColor = Color(0xFF6D4C41)
                     ),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(40.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                        horizontal = 8.dp,
+                        vertical = 2.dp
+                    )
                 ) {
-                    Text("Limpiar", fontWeight = FontWeight.Bold)
+                    Text("Limpiar", fontWeight = FontWeight.Bold, fontSize = 11.sp, maxLines = 1)
                 }
 
                 Button(
@@ -209,21 +221,33 @@ fun PowerupStoreDialog(
                         disabledContainerColor = DisabledGray,
                         disabledContentColor = Color(0xFF6D4C41)
                     ),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(40.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                        horizontal = 8.dp,
+                        vertical = 2.dp
+                    )
                 ) {
-                    Text("Confirmar", fontWeight = FontWeight.Bold)
+                    Text("Confirmar", fontWeight = FontWeight.Bold, fontSize = 11.sp, maxLines = 1)
                 }
-            }
 
-            Button(
-                onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF9E9E9E),
-                    contentColor = Color.White
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Cancelar", fontWeight = FontWeight.Bold)
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF9E9E9E),
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(40.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                        horizontal = 8.dp,
+                        vertical = 2.dp
+                    )
+                ) {
+                    Text("Cancelar", fontWeight = FontWeight.Bold, fontSize = 11.sp, maxLines = 1)
+                }
             }
         }
     }
@@ -251,8 +275,8 @@ private fun PowerupCard(
             .background(cardBackground)
             .border(1.dp, borderColor, RoundedCornerShape(8.dp))
             .clickable(enabled = canBuyMore, onClick = onTap)
-            .height(130.dp)
-            .padding(horizontal = 6.dp, vertical = 6.dp),
+            .height(92.dp)
+            .padding(horizontal = 4.dp, vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
@@ -262,13 +286,15 @@ private fun PowerupCard(
         ) {
             Text(
                 text = POWERUP_ICONS[type] ?: "\u2728",
-                fontSize = 18.sp
+                fontSize = 16.sp
             )
             Text(
                 text = stringResource(type.labelRes()),
                 color = TitleText,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                maxLines = 2
             )
         }
 
@@ -292,7 +318,7 @@ private fun PowerupCard(
             Text(
                 text = newLevel.toString(),
                 color = TitleText,
-                fontSize = 10.sp,
+                fontSize = 9.sp,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -300,13 +326,14 @@ private fun PowerupCard(
         Text(
             text = stringResource(type.descriptionRes()),
             color = MutedText,
-            fontSize = 8.sp,
-            maxLines = 3
+            fontSize = 7.sp,
+            maxLines = 1
         )
         Text(
             text = "$costPerLevel \uD83E\uDE99/nivel",
             color = MutedText,
-            fontSize = 9.sp
+            fontSize = 7.sp,
+            fontWeight = FontWeight.SemiBold
         )
     }
 }
