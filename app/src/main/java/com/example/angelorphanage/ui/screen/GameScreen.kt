@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -403,17 +402,28 @@ fun TopHudBar(
     onOpenPowerupStore: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val hudBg = Color(0xB334251D)
+    val hudCard = Color(0xA64A3527)
+    val hudBorder = Color(0x66FFE0B2)
+
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color.Black.copy(alpha = 0.55f))
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .padding(horizontal = 8.dp, vertical = 1.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(hudBg)
+            .border(1.dp, hudBorder, RoundedCornerShape(16.dp))
+            .padding(horizontal = 5.dp, vertical = 1.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Left: Resource indicators (tappable for selection)
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .weight(1.9f)
+                .clip(RoundedCornerShape(12.dp))
+                .background(hudCard)
+                .padding(horizontal = 5.dp, vertical = 1.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             ResourceIndicator(
@@ -421,40 +431,66 @@ fun TopHudBar(
                 amount = currentResources[ResourceType.FOOD] ?: 0,
                 allocated = totalAllocated[ResourceType.FOOD] ?: 0,
                 isSelected = selectedResource == ResourceType.FOOD,
-                onClick = { onSelectResource(ResourceType.FOOD) }
+                onClick = { onSelectResource(ResourceType.FOOD) },
+                modifier = Modifier.weight(1f)
             )
             ResourceIndicator(
                 type = ResourceType.WATER,
                 amount = currentResources[ResourceType.WATER] ?: 0,
                 allocated = totalAllocated[ResourceType.WATER] ?: 0,
                 isSelected = selectedResource == ResourceType.WATER,
-                onClick = { onSelectResource(ResourceType.WATER) }
+                onClick = { onSelectResource(ResourceType.WATER) },
+                modifier = Modifier.weight(1f)
             )
         }
 
-        // Center: Powerups button (stub)
         Button(
             onClick = onOpenPowerupStore,
             enabled = powerUpsUnlocked,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF7E57C2),
-                contentColor = Color.White,
-                disabledContainerColor = Color(0xFF424242),
-                disabledContentColor = Color(0xFF9E9E9E)
+                containerColor = Color(0xFF7A4F33),
+                contentColor = Color(0xFFFFF3E0),
+                disabledContainerColor = Color(0xFF4A3A31),
+                disabledContentColor = Color(0xFFBCAAA4)
             ),
-            modifier = Modifier.height(36.dp)
+            modifier = Modifier
+                .weight(1.15f)
+                .height(32.dp),
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+            shape = RoundedCornerShape(12.dp)
         ) {
-            Text("🛒 Powerups", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text(
+                text = "Powerups",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
+            )
         }
 
-        // Right: Level, Day, Score (coins)
         Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier
+                .weight(1.2f)
+                .clip(RoundedCornerShape(12.dp))
+                .background(hudCard)
+                .padding(horizontal = 5.dp, vertical = 1.dp),
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            InfoBadge(icon = "Lvl", label = "Nivel", value = level.toString())
-            InfoBadge(icon = "📅", label = "Día", value = elapsedTurns.toString())
-            InfoBadge(icon = "🪙", label = "Monedas", value = score.toString())
+            InfoBadge(
+                icon = "Nv",
+                value = level.toString(),
+                modifier = Modifier.weight(1f)
+            )
+            InfoBadge(
+                icon = "Dia",
+                value = elapsedTurns.toString(),
+                modifier = Modifier.weight(1f)
+            )
+            InfoBadge(
+                icon = "$",
+                value = score.toString(),
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -470,7 +506,8 @@ fun ResourceIndicator(
     amount: Int,
     allocated: Int,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val imageRes = when (type) {
         ResourceType.FOOD -> if (amount > 0) R.drawable.pplatolleno else R.drawable.pplatovacio
@@ -479,38 +516,43 @@ fun ResourceIndicator(
 
     val highlightModifier = if (isSelected) {
         Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .border(2.dp, Color(0xFFFFEB3B), RoundedCornerShape(8.dp))
-            .background(Color(0x55FFEB3B))
+            .clip(RoundedCornerShape(10.dp))
+            .border(1.5.dp, Color(0xFFFFD54F), RoundedCornerShape(10.dp))
+            .background(Color(0x884F3424))
     } else {
         Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color(0x55301F16))
     }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = highlightModifier
+        modifier = modifier
+            .then(highlightModifier)
             .clickable(onClick = onClick)
-            .padding(horizontal = 6.dp, vertical = 4.dp)
+            .padding(horizontal = 5.dp, vertical = 0.dp)
     ) {
         Image(
             painter = painterResource(id = imageRes),
             contentDescription = stringResource(type.nameRes),
-            modifier = Modifier.size(28.dp)
+            modifier = Modifier.size(16.dp)
         )
         Spacer(modifier = Modifier.width(4.dp))
-        Column {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(3.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = amount.toString(),
-                color = if (isSelected) Color(0xFFFFEB3B) else Color.White,
+                color = if (isSelected) Color(0xFFFFF59D) else Color.White,
                 fontWeight = FontWeight.Bold,
-                fontSize = 14.sp
+                fontSize = 10.sp
             )
             if (allocated > 0) {
                 Text(
                     text = "-$allocated",
-                    color = Color(0xFFFFAB91),
-                    fontSize = 10.sp
+                    color = Color(0xFFFFCCBC),
+                    fontSize = 7.sp
                 )
             }
         }
@@ -521,38 +563,29 @@ fun ResourceIndicator(
  * A compact info badge showing an icon and value.
  */
 @Composable
-fun InfoBadge(icon: String, label: String, value: String) {
+fun InfoBadge(
+    icon: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
     Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color(0x55301F16))
+            .padding(horizontal = 4.dp, vertical = 1.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceEvenly
+        horizontalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        Text(text = icon, fontSize = 14.sp, color = Color.White)
-        Spacer(modifier = Modifier.width(4.dp))
+        Text(text = icon, fontSize = 8.sp, color = Color(0xFFFFE0B2), fontWeight = FontWeight.Bold)
         Text(
             text = value,
             color = Color.White,
             fontWeight = FontWeight.Bold,
-            fontSize = 14.sp
+            fontSize = 10.sp
         )
     }
 }
 
-// ─── Pet Display ──────────────────────────────────────────────────────
-
-/**
- * Displays a single pet with horizontal meter bars and a reset button.
- * Tapping the pet allocates +1 of the currently selected resource.
- *
- * Layout:
- * ```
- * ┌─────────────────────┐
- * │     🐶 Firulais      │
- * │  C ▓▓▓▒░  A ▓▓▒░  │
- * │        [↺]          │
- * └─────────────────────┘
- * ```
- * Where ▓ = filled, ▒ = allocation preview (light blue), ░ = empty.
- */
 @Composable
 fun PetDisplay(
     scorer: ScorerInstance,
@@ -651,27 +684,6 @@ fun PetDisplay(
                         modifier = Modifier.padding(horizontal=4.dp)
                     )
 
-                    // Reset allocation button (only visible if there is any allocation)
-                    val hasAllocation = currentAllocation.values.any { it > 0 }
-                    if (hasAllocation) {
-                        Spacer(modifier = Modifier.width(2.dp))
-                        Button(
-                            onClick = { onAllocate(emptyMap()) },
-                            modifier = Modifier.size(20.dp),
-                            contentPadding = PaddingValues(0.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFE57373),
-                                contentColor = Color.White
-                            ),
-                            shape = CircleShape
-                        ) {
-                            Text(
-                                text = "↺",
-                                fontSize = 10.sp,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
                 }
                 Image(
                     painter = painterResource(id = petImageRes),
@@ -782,3 +794,4 @@ fun GameScreenPreview() {
         )
     }
 }
+
