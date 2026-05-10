@@ -1,5 +1,6 @@
 package com.example.angelorphanage.ui.screen
 
+import android.media.MediaPlayer
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,12 +25,15 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -59,8 +63,23 @@ fun EndScreen(
     onNavigateToTitle: () -> Unit,
     gameRepository: GameRepository
 ) {
+    val context = LocalContext.current
+    val finishPlayer = remember(context) { MediaPlayer.create(context, R.raw.finish) }
+
     LaunchedEffect(Unit) {
         gameRepository.clearCurrentGame()
+    }
+
+    DisposableEffect(finishPlayer) {
+        finishPlayer?.start()
+        onDispose {
+            finishPlayer?.apply {
+                runCatching {
+                    if (isPlaying) stop()
+                }
+                release()
+            }
+        }
     }
 
     val adoptedPets = pets.filter { it.givenAway }
