@@ -27,6 +27,9 @@ import com.example.angelorphanage.ui.screen.ScoreScreen
 import com.example.angelorphanage.ui.screen.SplashScreen
 import com.example.angelorphanage.ui.screen.TitleScreen
 
+private const val OPEN_END_SCREEN_DIRECTLY = false
+
+
 /**
  * Result data for a completed game, shared between GameScreen and EndScreen.
  * Not persisted — only lives in memory for the current session's EndScreen.
@@ -80,11 +83,22 @@ fun AppNavigation(
     LaunchedEffect(Unit) {
         hasSavedGame = repository.loadCurrentGame() != null
         gameSummaries = repository.getCompletedGames()
+
+        if (ENABLE_DEBUG && OPEN_END_SCREEN_DIRECTLY) {
+            val debugState = RICH_DEBUG_STATE
+            lastGameResult = GameResult(
+                score = debugState.score,
+                elapsedTurns = debugState.elapsedTurns,
+                level = debugState.level,
+                rating = calculateRating(debugState.elapsedTurns),
+                pets = debugState.scorers
+            )
+        }
     }
 
     NavHost(
         navController = navController,
-        startDestination = Routes.Splash,
+        startDestination = if (ENABLE_DEBUG && OPEN_END_SCREEN_DIRECTLY) Routes.End else Routes.Splash,
         modifier = modifier
     ) {
         composable<Routes.Splash> {
@@ -175,3 +189,4 @@ fun AppNavigation(
         }
     }
 }
+

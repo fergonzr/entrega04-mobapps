@@ -1,48 +1,54 @@
 package com.example.angelorphanage.ui.screen
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.angelorphanage.R
 import com.example.angelorphanage.data.GameRepository
 import com.example.angelorphanage.domain.ScorerInstance
+import com.example.angelorphanage.domain.ScorerType
 
-/**
- * Screen shown when a game finishes.
- * Displays a star rating, game statistics, and the list of pets encountered.
- *
- * @param rating Star rating from 0 to 5 based on performance (fewer turns = more stars).
- * @param score Final score achieved in the game.
- * @param elapsedTurns Number of turns taken to complete the game.
- * @param level Final level reached.
- * @param pets List of all pets encountered during the game.
- * @param onNavigateToTitle Callback to navigate back to the title screen.
- */
+private val EndPanel = Color(0xFFF2EADF)
+private val EndPanelBorder = Color(0xFFA98569)
+private val StatsPanel = Color(0xFFD7C9BA)
+private val PetCardColor = Color(0xFFD7D2CC)
+private val TitleColor = Color(0xFF3E2723)
+private val DetailColor = Color(0xFF5D4037)
+private val LovePink = Color(0xFFE573B3)
+
 @Composable
 fun EndScreen(
     rating: Int,
@@ -57,181 +63,262 @@ fun EndScreen(
         gameRepository.clearCurrentGame()
     }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+    val adoptedPets = pets.filter { it.givenAway }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .safeDrawingPadding()
     ) {
+        Image(
+            painter = painterResource(id = R.drawable.salon),
+            contentDescription = "Fondo salon",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+            alpha = 0.24f
+        )
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Title
             item {
-                Text(
-                    text = "¡Juego Terminado!",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "JUEGO TERMINADO",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 30.sp,
+                        color = TitleColor,
+                        textAlign = TextAlign.Center
+                    )
+                    StarRating(rating = rating)
+                }
+            }
+
+            item {
+                StatsCard(
+                    score = score,
+                    elapsedTurns = elapsedTurns,
+                    level = level,
+                    petsFound = pets.size,
+                    petsAdopted = adoptedPets.size
                 )
             }
 
-            // Star rating
             item {
-                StarRating(rating = rating)
-            }
-
-            // Statistics card
-            item {
-                Card(
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Column(
+                    Text(
+                        text = "MASCOTAS ADOPTADAS",
+                        modifier = Modifier.weight(1f),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = TitleColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Button(
+                        onClick = onNavigateToTitle,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFC9C1B6),
+                            contentColor = Color(0xFF2F2A25)
+                        ),
+                        shape = RoundedCornerShape(20.dp),
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                            .padding(start = 8.dp)
+                            .width(110.dp)
+                            .height(40.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                            horizontal = 10.dp,
+                            vertical = 4.dp
+                        )
                     ) {
                         Text(
-                            text = "Estadísticas",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        StatRow(label = "Puntaje final", value = score.toString())
-                        StatRow(label = "Turnos", value = elapsedTurns.toString())
-                        StatRow(label = "Nivel alcanzado", value = level.toString())
-                        StatRow(label = "Mascotas encontradas", value = pets.size.toString())
-                        StatRow(
-                            label = "Mascotas adoptadas",
-                            value = pets.count { it.givenAway }.toString()
+                            text = "Volver",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
             }
 
-            // Pets encountered section
-            item {
-                Text(
-                    text = "Mascotas encontradas",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            if (adoptedPets.isEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = PetCardColor),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "Todavia no hubo adopciones en esta partida.",
+                            modifier = Modifier.padding(16.dp),
+                            color = DetailColor,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            } else {
+                items(adoptedPets.chunked(2)) { pair ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        AdoptedPetCard(
+                            pet = pair[0],
+                            modifier = Modifier.weight(1f)
+                        )
 
-            // Pet list
-            items(pets) { pet ->
-                PetSummaryCard(pet = pet)
-            }
-
-            // Back to title button
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = onNavigateToTitle,
-                    modifier = Modifier.width(240.dp)
-                ) {
-                    Text(
-                        text = "Volver al Inicio",
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                        if (pair.size > 1) {
+                            AdoptedPetCard(
+                                pet = pair[1],
+                                modifier = Modifier.weight(1f)
+                            )
+                        } else {
+                            Box(modifier = Modifier.weight(1f))
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-/**
- * Displays a row of 5 stars, filled or empty based on the rating.
- * Uses the estrellacompleta drawable for filled stars and estrella for empty stars.
- */
 @Composable
 fun StarRating(rating: Int) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         for (i in 1..5) {
             Image(
                 painter = painterResource(
-                    id = if (i <= rating) R.drawable.estrellacompleta else R.drawable.estrellacompleta
+                    id = if (i <= rating) R.drawable.estrellacompleta else R.drawable.estrella
                 ),
-                contentDescription = if (i <= rating) "Estrella completa" else "Estrella vacía",
-                modifier = Modifier.size(48.dp)
+                contentDescription = "Estrella $i",
+                modifier = Modifier.size(34.dp)
             )
         }
     }
 }
 
-/**
- * A simple row displaying a label and its value for the statistics card.
- */
 @Composable
-fun StatRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+private fun StatsCard(
+    score: Int,
+    elapsedTurns: Int,
+    level: Int,
+    petsFound: Int,
+    petsAdopted: Int
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .border(1.dp, EndPanelBorder, RoundedCornerShape(14.dp)),
+        colors = CardDefaults.cardColors(containerColor = EndPanel)
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimaryContainer
-        )
+        Column(modifier = Modifier.padding(10.dp)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(StatsPanel)
+                    .padding(10.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(text = "Estadisticas", color = TitleColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    StatRow(label = "Puntaje final", value = score.toString())
+                    StatRow(label = "Nivel alcanzado", value = level.toString())
+                    StatRow(label = "Mascotas encontradas", value = petsFound.toString())
+                    StatRow(label = "Mascotas adoptadas", value = petsAdopted.toString())
+                    StatRow(label = "Turnos", value = elapsedTurns.toString())
+                }
+            }
+        }
     }
 }
 
-/**
- * A compact card summarizing a single pet encountered during the game.
- */
 @Composable
-fun PetSummaryCard(pet: ScorerInstance) {
-    Card(
+private fun StatRow(label: String, value: String) {
+    Row(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        )
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = label, color = DetailColor, fontSize = 12.sp)
+        Text(text = value, color = TitleColor, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+    }
+}
+
+@Composable
+private fun AdoptedPetCard(
+    pet: ScorerInstance,
+    modifier: Modifier = Modifier
+) {
+    val petImage = when (pet.type) {
+        ScorerType.DOG -> R.drawable.perrofeliz
+        ScorerType.CAT -> R.drawable.gatofeliz
+    }
+    val typeLabel = if (pet.type == ScorerType.DOG) "Perro" else "Gato"
+
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = PetCardColor),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column {
+            Image(
+                painter = painterResource(id = petImage),
+                contentDescription = pet.name,
+                modifier = Modifier.size(56.dp)
+            )
+
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = pet.name,
+                    color = TitleColor,
                     fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.bodyLarge
+                    fontSize = 18.sp,
+                    maxLines = 1
                 )
                 Text(
-                    text = pet.type.name,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                    text = typeLabel,
+                    color = DetailColor,
+                    fontSize = 12.sp
                 )
-            }
-            if (pet.givenAway) {
-                Text(
-                    text = "Adoptada ❤",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.tertiary,
-                    fontWeight = FontWeight.Bold
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 3.dp),
+                    thickness = 1.dp,
+                    color = Color(0x55FFFFFF)
                 )
+                Row(
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(text = "💗", color = LovePink, fontSize = 12.sp)
+                    Text(
+                        text = "Soy muy feliz con mi nuevo dueno!",
+                        color = DetailColor,
+                        fontSize = 11.sp,
+                        lineHeight = 12.sp
+                    )
+                }
             }
         }
     }
