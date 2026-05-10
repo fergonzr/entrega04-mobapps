@@ -1,5 +1,8 @@
 package com.example.angelorphanage.ui.screen
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -21,17 +24,23 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.angelorphanage.R
-import com.example.angelorphanage.debug.ENABLE_DEBUG
+import com.juego.petangels.R
+import com.juego.petangels.debug.ENABLE_DEBUG
 
 @Composable
 fun TitleScreen(
@@ -43,6 +52,27 @@ fun TitleScreen(
     val primaryCta = Color(0xFF5A3D2B)
     val secondaryCta = Color(0xFF2F6F5D)
     val ctaText = Color(0xFFFFF7E8)
+    var titleVisible by remember { mutableStateOf(false) }
+    val titleAlpha by animateFloatAsState(
+        targetValue = if (titleVisible) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = 850,
+            easing = FastOutSlowInEasing
+        ),
+        label = "titleAlpha"
+    )
+    val titleOffsetY by animateFloatAsState(
+        targetValue = if (titleVisible) 0f else 32f,
+        animationSpec = tween(
+            durationMillis = 850,
+            easing = FastOutSlowInEasing
+        ),
+        label = "titleOffsetY"
+    )
+
+    LaunchedEffect(Unit) {
+        titleVisible = true
+    }
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -91,6 +121,10 @@ fun TitleScreen(
                         painter = painterResource(id = R.drawable.titlescreen),
                         contentDescription = "Angel Orphanage",
                         modifier = Modifier
+                            .graphicsLayer {
+                                alpha = titleAlpha
+                                translationY = titleOffsetY
+                            }
                             .fillMaxWidth()
                             .height(logoHeight),
                         contentScale = ContentScale.Fit

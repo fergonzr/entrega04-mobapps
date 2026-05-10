@@ -12,10 +12,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AngelOrphanage">
         <activity
-            android:name="com.example.angelorphanage.MainActivity"
+            android:name="com.juego.petangels.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:screenOrientation="sensorLandscape"
+            android:screenOrientation="landscape"
             android:theme="@style/Theme.AngelOrphanage">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

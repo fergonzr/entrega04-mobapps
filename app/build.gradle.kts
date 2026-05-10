@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.angelorphanage"
+    namespace = "com.juego.petangels"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -13,7 +13,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.angelorphanage"
+        applicationId = "com.juego.petangels"
         minSdk = 29
         targetSdk = 36
         versionCode = 1
