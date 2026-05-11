@@ -15,8 +15,8 @@ enum class ScorerType(
 ): Scorer {
     DOG(name = R.string.dog_label,
         meterLimits = mapOf(
-            ResourceType.FOOD to Pair(-2,3),
-            ResourceType.WATER to Pair(-2,2),
+            ResourceType.FOOD to Pair(-3,2),
+            ResourceType.WATER to Pair(-3,2),
         ),
         giveawayReward = 250,
     ) {
