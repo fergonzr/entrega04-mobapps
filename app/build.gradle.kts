@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation("org.apache.commons:commons-math3:3.6.1")
     implementation("androidx.navigation:navigation-compose:$nav_version")
     // Views/Fragments integration
         implementation("androidx.navigation:navigation-fragment:${nav_version}")

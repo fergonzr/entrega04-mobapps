@@ -15,9 +15,7 @@ class Powerup(val type: PowerupType, val level: Int = 1) : GameParameterDiff {
             false
 
     override fun hashCode(): Int {
-        var result = level
-        result = 31 * result + type.hashCode()
-        return result
+        return type.hashCode()
     }
 
     operator fun plus(other: Powerup): Powerup {

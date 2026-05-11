@@ -3,6 +3,8 @@ package com.example.angelorphanage.domain
 import androidx.annotation.StringRes
 import com.example.angelorphanage.R
 import kotlinx.serialization.Serializable
+import kotlin.math.ceil
+import kotlin.math.ln
 import kotlin.random.Random
 
 // Each score generator types on the game
@@ -18,7 +20,7 @@ enum class ScorerType(
             ResourceType.FOOD to Pair(-3,2),
             ResourceType.WATER to Pair(-3,2),
         ),
-        giveawayReward = 250,
+        giveawayReward = 30,
     ) {
         override fun tickdown_meters(
             parameters: GameParameters,
@@ -34,8 +36,9 @@ enum class ScorerType(
         ): Int {
             return meters.map {
                 when (it.key) {
-                    ResourceType.FOOD -> it.value
-                    ResourceType.WATER -> it.value * 2
+                    // Dogs are more sensitive to hunger than thirst
+                    ResourceType.FOOD -> ceil(7.0 * ln(it.value / 3.0 + 1.001)).toInt()
+                    ResourceType.WATER -> ceil(3.5 * ln(it.value / 3.0 + 1.001)).toInt()
                 }
             }.sum()
         }
@@ -46,8 +49,8 @@ enum class ScorerType(
         ): Boolean {
             val metersFull = meters.all { it.value == this.meterLimits[it.key]!!.second }
             if (!metersFull) return false
-            // 10% base chance, each visibility level adds 30%, reaching 100% at max level (3)
-            val chance = (10 + parameters.getVisibility() * 30).coerceAtMost(100)
+            // 43% base chance, each visibility level adds 19%, reaching 100% at max level (3)
+            val chance = (43 + parameters.getVisibility() * 19).coerceAtMost(100)
             return Random.nextInt(100) < chance
         }
 
@@ -55,17 +58,17 @@ enum class ScorerType(
 
     CAT(name = R.string.cat_label,
         meterLimits = mapOf(
-            ResourceType.FOOD to Pair(-1,1),
-            ResourceType.WATER to Pair(-1,2),
+            ResourceType.FOOD to Pair(-1,2),
+            ResourceType.WATER to Pair(-2,1),
         ),
-        giveawayReward = 150
+        giveawayReward = 25
     ){
         override fun tickdown_meters(
             parameters: GameParameters,
             meters: Map<ResourceType, Int>
         ): Map<ResourceType, Int> = mapOf(
             ResourceType.FOOD to 1,
-            ResourceType.WATER to 1,
+            ResourceType.WATER to 2,
         )
 
         override fun score(
@@ -74,8 +77,9 @@ enum class ScorerType(
         ): Int {
             return meters.map {
                 when (it.key) {
-                    ResourceType.FOOD -> it.value
-                    ResourceType.WATER -> it.value * 2
+                    // Cats are more sensitive to thirst than hunger
+                    ResourceType.FOOD -> 2 * it.value
+                    ResourceType.WATER -> 3 * it.value
                 }
             }.sum()
         }
@@ -86,8 +90,8 @@ enum class ScorerType(
         ): Boolean {
             val metersFull = meters.all { it.value == this.meterLimits[it.key]!!.second }
             if (!metersFull) return false
-            // 20% base chance, each visibility level adds 27%, reaching ~100% at max level (3)
-            val chance = (20 + parameters.getVisibility() * 27).coerceAtMost(100)
+            // 43% base chance, each visibility level adds 19%, reaching ~100% at max level (3)
+            val chance = (43 + parameters.getVisibility() * 19).coerceAtMost(100)
             return Random.nextInt(100) < chance
         }
 

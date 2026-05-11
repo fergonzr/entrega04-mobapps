@@ -2,6 +2,7 @@ package com.example.angelorphanage.domain
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import kotlin.math.max
 
 /**
  * The immutable state of the game
@@ -92,7 +93,8 @@ data class GameState(
         }
 
         return this.copy(
-            score = newScore,
+            // Do not allow the player's score to get into the negatives)
+            score = max(newScore, 0),
             elapsedTurns = this.elapsedTurns + 1,
             level = newLevel,
             scorers =
@@ -121,7 +123,7 @@ data class GameState(
 
         return this.copy(
             powerups = setOf(
-                *this.powerups.toTypedArray(), newPowerup),
+                newPowerup, *this.powerups.toTypedArray()),
             score = newScore
         )
     }

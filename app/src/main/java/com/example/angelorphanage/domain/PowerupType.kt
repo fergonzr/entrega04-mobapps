@@ -17,7 +17,7 @@ enum class PowerupType(
         R.string.comfort_desc,
         1,
         3,
-        200
+        40
     ){
         override fun apply(parameters: GameParameters, level: Int): GameParameters =
             object: GameParameters {
@@ -32,7 +32,7 @@ enum class PowerupType(
         R.string.adoption_marketing_desc,
         2,
         3,
-        250
+        50
     ){
         override fun apply(parameters: GameParameters, level: Int): GameParameters =
             object: GameParameters {
@@ -47,7 +47,7 @@ enum class PowerupType(
         R.string.food_increment_desc,
         3,
         3,
-        300
+        20
     ){
         override fun apply(parameters: GameParameters, level: Int): GameParameters =
             object: GameParameters {
@@ -62,7 +62,7 @@ enum class PowerupType(
         R.string.water_increment_desc,
         4,
         3,
-        300
+        20
     ){
         override fun apply(parameters: GameParameters, level: Int): GameParameters =
             object: GameParameters {
