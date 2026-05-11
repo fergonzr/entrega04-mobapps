@@ -208,4 +208,4 @@ Configuracion Android detectada:
 
 Proyecto Android desarrollado para PetAngels.
 
-Autor/es: no especificado en el codigo fuente del repositorio.
+Autor/es: Zharick Carrillo, Fernando Gonzalez y Nicole Yuqui.
