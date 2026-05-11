@@ -61,6 +61,8 @@ private val PetCardColor = Color(0xFFD7D2CC)
 private val TitleColor = Color(0xFF3E2723)
 private val DetailColor = Color(0xFF5D4037)
 private val LovePink = Color(0xFFE573B3)
+private val PetNameTagBg = Color(0xFF7A4F33)
+private val PetNameTagText = Color(0xFFFFF8E1)
 
 @Composable
 fun EndScreen(
@@ -407,13 +409,20 @@ private fun AdoptedPetCard(
             )
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = pet.name,
-                    color = TitleColor,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    maxLines = 1
-                )
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(PetNameTagBg)
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        text = pet.name,
+                        color = PetNameTagText,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        maxLines = 1
+                    )
+                }
                 Text(
                     text = typeLabel,
                     color = DetailColor,
