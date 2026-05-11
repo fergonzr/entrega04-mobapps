@@ -3,6 +3,11 @@ package com.juego.petangels.domain
 import androidx.annotation.StringRes
 import com.juego.petangels.R
 import kotlinx.serialization.Serializable
+import org.apache.commons.math3.distribution.NormalDistribution
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlin.random.Random
 
 @Serializable
 enum class ResourceType(
@@ -11,12 +16,14 @@ enum class ResourceType(
 ) : Resource {
     FOOD(R.string.food_label, 1) {
         override fun generate(parameters: GameParameters): Int {
-            return parameters.getFoodMultiplier()
+            return max(NormalDistribution(parameters.getFoodMultiplier().toDouble(), 1.0).sample()
+                .roundToInt(), 0)
         }
     },
     WATER(R.string.water_label, 2) {
         override fun generate(parameters: GameParameters): Int {
-            return parameters.getWaterMultiplier()
+            return max(NormalDistribution(parameters.getWaterMultiplier().toDouble(), 2.0).sample()
+                .roundToInt(), 0)
         }
     }
 }

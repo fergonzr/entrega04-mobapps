@@ -243,9 +243,7 @@ fun PowerupStoreDialog(
                     onClick = {
                         var newState = gameState
                         pendingPurchases.forEach { (type, levels) ->
-                            repeat(levels) {
-                                newState = newState.buy_powerup(Powerup(type))
-                            }
+                            newState = newState.buy_powerup(Powerup(type, levels))
                         }
                         onConfirm(newState)
                     },

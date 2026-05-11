@@ -2,6 +2,7 @@ package com.juego.petangels.domain
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import kotlin.math.max
 
 /**
  * The immutable state of the game
@@ -47,9 +48,15 @@ data class GameState(
         if (newResources.any { it.value < 0 })
             throw IllegalArgumentException("Can't allocate more resources than there are on stock.")
 
+        // Allocate the specified resources to each scorer
+
+        val allocatedScorers = this.scorers.mapIndexed { index, scorer ->
+            scorer.allocate(this.get_parameters(), allocation[index])
+        }
+
         // Calculate scores and handle giveaways
         var newScore = this.score
-        val newScorers = this.scorers.map { scorer ->
+        val newScorers = allocatedScorers.map { scorer ->
             if (scorer.givenAway) {
                 scorer
             } else {
@@ -75,13 +82,19 @@ data class GameState(
                 // Keep given away scorers as-is
                 scorer
             } else {
-                // Apply allocation or ticking based on the resource
-                scorer.allocate_or_tick(this.get_parameters(), allocation[index])
+                // Apply ticking based on the resource
+                scorer.tickdown(
+                    this.get_parameters(),
+                    ResourceType.entries
+                        .filter { (it !in allocation[index]) || (allocation[index][it] == 0) }
+                        .toSet()
+                )
             }
         }
 
         return this.copy(
-            score = newScore,
+            // Do not allow the player's score to get into the negatives)
+            score = max(newScore, 0),
             elapsedTurns = this.elapsedTurns + 1,
             level = newLevel,
             scorers =
@@ -110,7 +123,7 @@ data class GameState(
 
         return this.copy(
             powerups = setOf(
-                *this.powerups.toTypedArray(), newPowerup),
+                newPowerup, *this.powerups.toTypedArray()),
             score = newScore
         )
     }
