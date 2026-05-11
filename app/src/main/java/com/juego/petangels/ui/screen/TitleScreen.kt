@@ -96,6 +96,7 @@ fun TitleScreen(
     hasSavedGame: Boolean,
     onNavigateToGame: () -> Unit,
     onNavigateToScore: () -> Unit,
+    onNavigateToCredits: () -> Unit = {},
     onStartDebugGame: (level: Int) -> Unit = {}
 ) {
     val primaryCta = Color(0xFF5A3D2B)
@@ -154,6 +155,16 @@ fun TitleScreen(
         targetValue = if (buttonsVisible) 0f else 42f,
         animationSpec = tween(durationMillis = 420, delayMillis = 300, easing = FastOutSlowInEasing),
         label = "secondButtonOffset"
+    )
+    val thirdButtonAlpha by animateFloatAsState(
+        targetValue = if (buttonsVisible) 1f else 0f,
+        animationSpec = tween(durationMillis = 420, delayMillis = 480, easing = FastOutSlowInEasing),
+        label = "thirdButtonAlpha"
+    )
+    val thirdButtonOffset by animateFloatAsState(
+        targetValue = if (buttonsVisible) 0f else 42f,
+        animationSpec = tween(durationMillis = 420, delayMillis = 480, easing = FastOutSlowInEasing),
+        label = "thirdButtonOffset"
     )
     val logoFloatTransition = rememberInfiniteTransition(label = "logoFloat")
     val logoFloatY by logoFloatTransition.animateFloat(
@@ -253,6 +264,20 @@ fun TitleScreen(
                         contentColor = ctaText,
                         alpha = secondButtonAlpha,
                         offsetX = secondButtonOffset,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(mainButtonHeight)
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    AnimatedTitleButton(
+                        text = "Créditos",
+                        onClick = onNavigateToCredits,
+                        containerColor = secondaryCta,
+                        contentColor = ctaText,
+                        alpha = thirdButtonAlpha,
+                        offsetX = thirdButtonOffset,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(mainButtonHeight)

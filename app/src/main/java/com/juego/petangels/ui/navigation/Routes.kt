@@ -21,4 +21,7 @@ object Routes {
 
     @Serializable
     object Score
+
+    @Serializable
+    object Credits
 }
