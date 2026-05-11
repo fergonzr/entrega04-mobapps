@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.juego.petangels.data.GameRepository
 import com.juego.petangels.data.GameSummary
@@ -21,6 +22,7 @@ import com.juego.petangels.debug.debugGameStateForLevel
 import com.juego.petangels.domain.GameState
 import com.juego.petangels.domain.ScorerInstance
 import com.juego.petangels.ui.navigation.Routes
+import com.juego.petangels.ui.screen.CreditScreen
 import com.juego.petangels.ui.screen.EndScreen
 import com.juego.petangels.ui.screen.GameScreen
 import com.juego.petangels.ui.screen.ScoreScreen
@@ -78,9 +80,10 @@ fun AppNavigation(
     var hasSavedGame by remember { mutableStateOf(false) }
     var debugInitialState by remember { mutableStateOf<GameState?>(null) }
     val scope = rememberCoroutineScope()
+    val currentBackStackEntry by  navController.currentBackStackEntryAsState()
 
     // Check for a saved game on first composition
-    LaunchedEffect(Unit) {
+    LaunchedEffect(currentBackStackEntry) {
         hasSavedGame = repository.loadCurrentGame() != null
         gameSummaries = repository.getCompletedGames()
 
@@ -119,6 +122,7 @@ fun AppNavigation(
                     navController.navigate(Routes.Game)
                 },
                 onNavigateToScore = { navController.navigate(Routes.Score) },
+                onNavigateToCredits = { navController.navigate(Routes.Credits) },
                 onStartDebugGame = { level ->
                     debugInitialState = debugGameStateForLevel(level)
                     navController.navigate(Routes.Game)
@@ -183,6 +187,14 @@ fun AppNavigation(
             ScoreScreen(
                 gameSummaries = gameSummaries,
                 onNavigateToTitle = {
+                    navController.popBackStack(Routes.Title, inclusive = false)
+                }
+            )
+        }
+
+        composable<Routes.Credits> {
+            CreditScreen(
+                onNavigateBack = {
                     navController.popBackStack(Routes.Title, inclusive = false)
                 }
             )

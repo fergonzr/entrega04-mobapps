@@ -5,6 +5,7 @@ import android.media.MediaPlayer
 import android.media.SoundPool
 import com.juego.petangels.ui.screen.PowerupStoreDialog
 import androidx.compose.animation.AnimatedVisibility
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -158,6 +159,12 @@ fun GameScreen(
 
     // Whether the powerup store dialog is currently visible
     var showPowerupStore by remember { mutableStateOf(false) }
+
+    // Intercept system back button when the powerup store dialog is open,
+    // so pressing back closes the dialog instead of exiting the game screen.
+    BackHandler(enabled = showPowerupStore) {
+        showPowerupStore = false
+    }
 
     // Load saved game on first composition (skip if debug state was provided)
     LaunchedEffect(Unit) {
@@ -332,8 +339,12 @@ fun GameScreen(
         onPowerupLockedMessageDone = { showPowerupLockedMessage = false }
     )
 
-    // Powerup store dialog
-    if (showPowerupStore) {
+    // Powerup store dialog — animated fade in/out
+    AnimatedVisibility(
+        visible = showPowerupStore,
+        enter = fadeIn(animationSpec = tween(220)),
+        exit = fadeOut(animationSpec = tween(160))
+    ) {
         PowerupStoreDialog(
             gameState = gameState,
             onConfirm = { newState ->
@@ -518,7 +529,7 @@ private fun AdoptionProgressBadge(
     val message = if (remainingPets == 0) {
         "\u00A1Nivel completado!"
     } else {
-        "Faltan $remainingPets mascotas por adoptar"
+        "Faltan $remainingPets ${if (remainingPets == 1) "mascota" else "mascotas"} por adoptar"
     }
 
     Text(

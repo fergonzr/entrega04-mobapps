@@ -98,6 +98,18 @@ fun PowerupStoreDialog(
     val context = LocalContext.current
     var pendingPurchases by remember { mutableStateOf<Map<PowerupType, Int>>(emptyMap()) }
 
+    // Scale-in animation: starts small, springs to full size
+    var dialogVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { dialogVisible = true }
+    val panelScale by animateFloatAsState(
+        targetValue = if (dialogVisible) 1f else 0.82f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "dialogPanelScale"
+    )
+
     val currentLevels = PowerupType.entries.associateWith { type ->
         gameState.powerups.find { it.type == type }?.level ?: 0
     }
@@ -122,6 +134,10 @@ fun PowerupStoreDialog(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .graphicsLayer {
+                    scaleX = panelScale
+                    scaleY = panelScale
+                }
                 .clip(RoundedCornerShape(12.dp))
                 .background(DialogBackground)
                 .border(1.dp, DialogBorder, RoundedCornerShape(12.dp))
